@@ -4,3 +4,34 @@
 *.xcuserstate
 xcuserdata/
 .swiftpm/
+
+# macOS / iCloud
+.AppleDouble
+.LSOverride
+*.icloud
+*.nosync
+.build 2/
+
+# Build output
+.build/
+.build.nosync/
+build/
+DerivedData/
+*.app
+*.dSYM/
+*.xcarchive
+*.ipa
+*.dmg
+
+# Xcode / SwiftPM user state
+*.xcworkspace/xcuserdata/
+*.moved-aside
+
+# Editors / local tooling
+.idea/
+.vscode/*.log
+.claude/settings.local.json
+.claude/worktrees/
+*.log
+*.swp
+*~
