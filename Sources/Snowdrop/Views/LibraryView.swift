@@ -1,0 +1,608 @@
+import SwiftUI
+
+// MARK: - LibraryFilter
+
+/// Filter options for the Library view.
+enum LibraryFilter: String, CaseIterable, Identifiable {
+    case all = "All"
+    case playlists = "Playlists"
+    case albums = "Albums"
+    case uploads = "Uploads"
+    case artists = "Artists"
+    case podcasts = "Podcasts"
+
+    var id: String {
+        self.rawValue
+    }
+
+    var icon: String {
+        switch self {
+        case .all: "square.grid.2x2"
+        case .playlists: "music.note.list"
+        case .albums: "square.stack"
+        case .uploads: "tray.and.arrow.up.fill"
+        case .artists: "person.fill"
+        case .podcasts: "mic.fill"
+        }
+    }
+
+    var displayName: String {
+        switch self {
+        case .all:
+            String(localized: "All")
+        case .playlists:
+            String(localized: "Playlists")
+        case .albums:
+            String(localized: "Albums")
+        case .uploads:
+            String(localized: "Uploads")
+        case .artists:
+            String(localized: "Artists")
+        case .podcasts:
+            String(localized: "Podcasts")
+        }
+    }
+}
+
+// MARK: - LibraryView
+
+/// Library view displaying the user's saved music and followed content.
+struct LibraryView: View {
+    @State var viewModel: LibraryViewModel
+    @Environment(PlayerService.self) private var playerService
+    @Environment(\.usesLegacyMacOS15UI) private var usesLegacyMacOS15UI
+    @State private var networkMonitor = NetworkMonitor.shared
+
+    @State private var navigationPath = NavigationPath()
+    @State private var selectedFilter: LibraryFilter = .all
+
+    private let libraryItemSize: CGFloat = 160
+    private let libraryItemSpacing: CGFloat = 18
+    private let libraryItemCardHeight: CGFloat = 222
+
+    var body: some View {
+        NavigationStack(path: self.$navigationPath) {
+            Group {
+                if !self.networkMonitor.isConnected {
+                    ErrorView(
+                        title: String(localized: "No Connection"),
+                        message: String(localized: "Please check your internet connection and try again.")
+                    ) {
+                        Task { await self.viewModel.refresh() }
+                    }
+                } else {
+                    switch self.viewModel.loadingState {
+                    case .idle, .loading:
+                        LoadingView(String(localized: "Loading your library..."))
+                    case .loaded, .loadingMore:
+                        self.contentView
+                    case let .error(error):
+                        ErrorView(error: error) {
+                            Task { await self.viewModel.refresh() }
+                        }
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .localizedNavigationTitle("Library")
+            .navigationDestination(for: Playlist.self) { playlist in
+                if !self.usesLegacyMacOS15UI, #available(macOS 26.0, *) {
+                    PlaylistDetailView(
+                        playlist: playlist,
+                        viewModel: PlaylistDetailViewModel(
+                            playlist: playlist,
+                            client: self.viewModel.client
+                        )
+                    )
+                    .environment(\.libraryViewModel, self.viewModel)
+                } else {
+                    SimplePlaylistDetailView(
+                        playlist: playlist,
+                        viewModel: PlaylistDetailViewModel(
+                            playlist: playlist,
+                            client: self.viewModel.client
+                        )
+                    )
+                    .environment(\.libraryViewModel, self.viewModel)
+                }
+            }
+            .navigationDestination(for: Artist.self) { artist in
+                ArtistDetailView(
+                    artist: artist,
+                    viewModel: ArtistDetailViewModel(
+                        artist: artist,
+                        client: self.viewModel.client,
+                        libraryViewModel: self.viewModel
+                    )
+                )
+            }
+            .navigationDestination(for: TopSongsDestination.self) { destination in
+                TopSongsView(
+                    viewModel: TopSongsViewModel(
+                        destination: destination,
+                        client: self.viewModel.client
+                    )
+                )
+            }
+            .navigationDestination(for: PodcastShow.self) { show in
+                PodcastShowView(show: show, client: self.viewModel.client)
+            }
+            .playerBarMusicNavigation(path: self.$navigationPath)
+        }
+        .playerBarMusicNavigation(path: self.$navigationPath)
+        .environment(\.libraryViewModel, self.viewModel)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            // A pushed card draws its own bar; two stacked bars looked like a bug.
+            if self.navigationPath.isEmpty {
+                PlayerBar()
+                    .playerBarMusicNavigation(path: self.$navigationPath)
+            }
+        }
+        .task {
+            if self.viewModel.loadingState == .idle {
+                await self.viewModel.load()
+            }
+            await self.viewModel.reloadIfNeededOnActivation()
+        }
+        .task(id: "\(self.navigationPath.count)-\(self.viewModel.activationReloadGeneration)") {
+            guard self.navigationPath.isEmpty else { return }
+            await self.viewModel.reloadIfNeededOnActivation()
+        }
+        .refreshable {
+            await self.viewModel.refresh()
+        }
+        .popsNavigationStackOnSidebarReselect(path: self.$navigationPath, for: .library)
+    }
+
+    // MARK: - Views
+
+    private var contentView: some View {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 20) {
+                // Filter chips
+                self.filterChips
+
+                // Combined grid with filtered content
+                self.libraryGrid
+            }
+            .padding(.vertical, 20)
+            // Inset the resting content while the scroll view stays edge-to-edge,
+            // so the grid extends under the floating glass sidebar.
+            .detailScrollContentInset()
+        }
+    }
+
+    private var filterChips: some View {
+        HStack(spacing: 8) {
+            ForEach(LibraryFilter.allCases) { filter in
+                self.filterChip(filter)
+            }
+            Spacer()
+        }
+    }
+
+    private func filterChip(_ filter: LibraryFilter) -> some View {
+        let isSelected = self.selectedFilter == filter
+
+        return Button {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                self.selectedFilter = filter
+            }
+        } label: {
+            Text(filter.displayName)
+                .font(.system(size: 13, weight: .medium))
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background {
+                    Capsule()
+                        .fill(isSelected ? Color.accentColor : Color.secondary.opacity(0.15))
+                }
+                .foregroundStyle(isSelected ? .white : .primary)
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// All library items combined and filtered.
+    private var filteredItems: [LibraryItem] {
+        var items: [LibraryItem] = []
+
+        switch self.selectedFilter {
+        case .all:
+            items = self.uploadItems
+                + self.viewModel.playlists.map { .playlist($0) }
+                + self.viewModel.albums.map { .album($0) }
+                + self.viewModel.artists.map { .artist($0) }
+                + self.viewModel.podcastShows.map { .podcast($0) }
+        case .playlists:
+            items = self.viewModel.playlists.map { .playlist($0) }
+        case .albums:
+            items = self.viewModel.albums.map { .album($0) }
+        case .uploads:
+            items = self.uploadItems
+        case .artists:
+            items = self.viewModel.artists.map { .artist($0) }
+        case .podcasts:
+            items = self.viewModel.podcastShows.map { .podcast($0) }
+        }
+
+        return items
+    }
+
+    private var uploadItems: [LibraryItem] {
+        guard let uploadedSongsPlaylist = self.viewModel.uploadedSongsPlaylist else {
+            return []
+        }
+        return [.uploadedSongs(uploadedSongsPlaylist)]
+    }
+
+    @ViewBuilder
+    private var libraryGrid: some View {
+        if self.filteredItems.isEmpty {
+            self.emptyStateView
+        } else {
+            LazyVGrid(columns: [
+                GridItem(.adaptive(minimum: self.libraryItemSize, maximum: 200), spacing: self.libraryItemSpacing),
+            ], spacing: 24) {
+                ForEach(self.filteredItems) { item in
+                    switch item {
+                    case let .playlist(playlist):
+                        self.playlistCard(playlist)
+                    case let .album(album):
+                        self.albumCard(album)
+                    case let .uploadedSongs(playlist):
+                        self.uploadedSongsCard(playlist)
+                    case let .artist(artist):
+                        self.artistCard(artist)
+                    case let .podcast(show):
+                        self.podcastCard(show)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private var emptyStateView: some View {
+        VStack(spacing: 12) {
+            Image(systemName: self.selectedFilter.icon)
+                .font(.largeTitle)
+                .foregroundStyle(.secondary)
+
+            Text(self.emptyStateTitle)
+                .font(.headline)
+                .foregroundStyle(.secondary)
+
+            Text(self.emptyStateMessage)
+                .font(.subheadline)
+                .foregroundStyle(.tertiary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.vertical, 40)
+        .frame(maxWidth: .infinity)
+    }
+
+    private var emptyStateTitle: String {
+        switch self.selectedFilter {
+        case .all:
+            String(localized: "Your library is empty")
+        case .playlists:
+            String(localized: "No playlists yet")
+        case .albums:
+            String(localized: "No albums yet")
+        case .uploads:
+            String(localized: "No uploaded songs yet")
+        case .artists:
+            String(localized: "No artists yet")
+        case .podcasts:
+            String(localized: "No podcasts yet")
+        }
+    }
+
+    private var emptyStateMessage: String {
+        switch self.selectedFilter {
+        case .all:
+            String(localized: "Save playlists, follow artists, and subscribe to podcasts on YouTube Music to see them here.")
+        case .playlists:
+            String(localized: "Create or save playlists on YouTube Music to see them here.")
+        case .albums:
+            String(localized: "Save albums on YouTube Music to see them here.")
+        case .uploads:
+            String(localized: "Upload songs to YouTube Music to browse them here.")
+        case .artists:
+            String(localized: "Follow artists on YouTube Music to see them here.")
+        case .podcasts:
+            String(localized: "Subscribe to podcasts on YouTube Music to see them here.")
+        }
+    }
+
+    private func playlistCard(_ playlist: Playlist) -> some View {
+        Button {
+            self.navigationPath.append(playlist)
+        } label: {
+            VStack(alignment: .leading, spacing: 8) {
+                // Thumbnail
+                CachedAsyncImage(url: playlist.thumbnailURL?.highQualityThumbnailURL) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                } placeholder: {
+                    Rectangle()
+                        .fill(.quaternary)
+                        .overlay {
+                            Image(systemName: "music.note.list")
+                                .font(.largeTitle)
+                                .foregroundStyle(.secondary)
+                        }
+                }
+                .frame(width: self.libraryItemSize, height: self.libraryItemSize)
+                .clipShape(.rect(cornerRadius: 8))
+
+                // Title
+                Text(playlist.title)
+                    .font(.system(size: 13, weight: .medium))
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .frame(width: self.libraryItemSize, alignment: .topLeading)
+
+                // Track count
+                if let count = playlist.trackCount {
+                    Text("\(count) songs", comment: "Playlist track count")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .frame(width: self.libraryItemSize, alignment: .leading)
+                }
+            }
+            .frame(width: self.libraryItemSize, height: self.libraryItemCardHeight, alignment: .topLeading)
+        }
+        .buttonStyle(.plain)
+        .contextMenu {
+            PlaylistContextMenu(
+                playlist: playlist,
+                client: self.viewModel.client,
+                navigate: { self.navigationPath.append($0) }
+            )
+
+            if playlist.canDelete {
+                Divider()
+
+                Button(role: .destructive) {
+                    SongActionsHelper.confirmDeletePlaylist(
+                        playlist,
+                        client: self.viewModel.client,
+                        libraryViewModel: self.viewModel,
+                        playerService: self.playerService
+                    )
+                } label: {
+                    Label(String(localized: "Delete Playlist…"), systemImage: "trash")
+                }
+            }
+        }
+    }
+
+    private func albumCard(_ album: Album) -> some View {
+        let metadata = [album.artistsDisplay.isEmpty ? nil : album.artistsDisplay, album.year]
+            .compactMap(\.self)
+            .joined(separator: " • ")
+
+        return Button {
+            self.navigationPath.append(self.playlist(from: album))
+        } label: {
+            VStack(alignment: .leading, spacing: 8) {
+                CachedAsyncImage(url: album.thumbnailURL?.highQualityThumbnailURL) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                } placeholder: {
+                    Rectangle()
+                        .fill(.quaternary)
+                        .overlay {
+                            Image(systemName: "square.stack")
+                                .font(.largeTitle)
+                                .foregroundStyle(.secondary)
+                        }
+                }
+                .frame(width: self.libraryItemSize, height: self.libraryItemSize)
+                .clipShape(.rect(cornerRadius: 8))
+
+                Text(album.title)
+                    .font(.system(size: 13, weight: .medium))
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .frame(width: self.libraryItemSize, alignment: .topLeading)
+
+                Text(metadata.isEmpty ? String(localized: "Album") : metadata)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .frame(width: self.libraryItemSize, alignment: .leading)
+            }
+            .frame(width: self.libraryItemSize, height: self.libraryItemCardHeight, alignment: .topLeading)
+        }
+        .buttonStyle(.plain)
+        .contextMenu {
+            AlbumContextMenu(
+                album: album,
+                client: self.viewModel.client,
+                navigate: { self.navigationPath.append($0) }
+            )
+        }
+    }
+
+    private func playlist(from album: Album) -> Playlist {
+        Playlist(
+            id: album.id,
+            title: album.title,
+            description: nil,
+            thumbnailURL: album.thumbnailURL,
+            trackCount: album.trackCount,
+            author: album.artistsDisplay.isEmpty
+                ? nil
+                : Artist.inline(name: album.artistsDisplay, namespace: "album-artist"),
+            libraryTargetId: album.libraryTargetId
+        )
+    }
+
+    private func uploadedSongsCard(_ playlist: Playlist) -> some View {
+        Button {
+            self.navigationPath.append(playlist)
+        } label: {
+            VStack(alignment: .leading, spacing: 8) {
+                CachedAsyncImage(url: playlist.thumbnailURL?.highQualityThumbnailURL) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                } placeholder: {
+                    Rectangle()
+                        .fill(.quaternary)
+                        .overlay {
+                            Image(systemName: "tray.and.arrow.up.fill")
+                                .font(.largeTitle)
+                                .foregroundStyle(.secondary)
+                        }
+                }
+                .frame(width: self.libraryItemSize, height: self.libraryItemSize)
+                .clipShape(.rect(cornerRadius: 8))
+
+                Text(playlist.title)
+                    .font(.system(size: 13, weight: .medium))
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .frame(width: self.libraryItemSize, alignment: .topLeading)
+
+                if let count = playlist.trackCount {
+                    Text("\(count) songs", comment: "Uploaded songs count")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .frame(width: self.libraryItemSize, alignment: .leading)
+                } else {
+                    Text(String(localized: "Uploads"))
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .frame(width: self.libraryItemSize, alignment: .leading)
+                }
+            }
+            .frame(width: self.libraryItemSize, height: self.libraryItemCardHeight, alignment: .topLeading)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func podcastCard(_ show: PodcastShow) -> some View {
+        Button {
+            self.navigationPath.append(show)
+        } label: {
+            VStack(alignment: .leading, spacing: 8) {
+                // Thumbnail
+                CachedAsyncImage(url: show.thumbnailURL) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                } placeholder: {
+                    Rectangle()
+                        .fill(.quaternary)
+                        .overlay {
+                            Image(systemName: "mic.fill")
+                                .font(.largeTitle)
+                                .foregroundStyle(.secondary)
+                        }
+                }
+                .frame(width: self.libraryItemSize, height: self.libraryItemSize)
+                .clipShape(.rect(cornerRadius: 8))
+
+                // Title
+                Text(show.title)
+                    .font(.system(size: 13, weight: .medium))
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .frame(width: self.libraryItemSize, alignment: .topLeading)
+
+                // Author
+                if let author = show.author {
+                    Text(author)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .frame(width: self.libraryItemSize, alignment: .leading)
+                }
+            }
+            .frame(width: self.libraryItemSize, height: self.libraryItemCardHeight, alignment: .topLeading)
+        }
+        .buttonStyle(.plain)
+        .contextMenu {
+            PodcastShowContextMenu(show: show, navigate: { self.navigationPath.append($0) })
+        }
+    }
+
+    private func artistCard(_ artist: Artist) -> some View {
+        Button {
+            self.navigationPath.append(artist)
+        } label: {
+            VStack(alignment: .leading, spacing: 8) {
+                CachedAsyncImage(url: artist.thumbnailURL?.highQualityThumbnailURL) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                } placeholder: {
+                    Circle()
+                        .fill(.quaternary)
+                        .overlay {
+                            Image(systemName: "person.fill")
+                                .font(.largeTitle)
+                                .foregroundStyle(.secondary)
+                        }
+                }
+                .frame(width: self.libraryItemSize, height: self.libraryItemSize)
+                .clipShape(Circle())
+
+                Text(artist.name)
+                    .font(.system(size: 13, weight: .medium))
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+                    .frame(width: self.libraryItemSize, alignment: .top)
+
+                Text(String(localized: "Artist"))
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .frame(width: self.libraryItemSize)
+            }
+            .frame(width: self.libraryItemSize, height: self.libraryItemCardHeight, alignment: .top)
+        }
+        .buttonStyle(.plain)
+        .contextMenu {
+            ArtistContextMenu(artist: artist, navigate: { self.navigationPath.append($0) })
+        }
+    }
+}
+
+// MARK: - LibraryItem
+
+/// Represents a tile displayed in the combined Library grid.
+enum LibraryItem: Identifiable {
+    case playlist(Playlist)
+    case album(Album)
+    case uploadedSongs(Playlist)
+    case artist(Artist)
+    case podcast(PodcastShow)
+
+    var id: String {
+        switch self {
+        case let .playlist(playlist):
+            "playlist-\(playlist.id)"
+        case let .album(album):
+            "album-\(album.id)"
+        case let .uploadedSongs(playlist):
+            "uploads-\(playlist.id)"
+        case let .artist(artist):
+            "artist-\(artist.id)"
+        case let .podcast(show):
+            "podcast-\(show.id)"
+        }
+    }
+}
+
+#Preview {
+    let authService = AuthService()
+    let client = YTMusicClient(authService: authService, webKitManager: .shared)
+    LibraryView(viewModel: LibraryViewModel(client: client))
+        .environment(PlayerService())
+        .environment(FavoritesManager.shared)
+}

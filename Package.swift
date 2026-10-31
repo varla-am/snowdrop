@@ -1,0 +1,118 @@
+// swift-tools-version: 6.2
+// The swift-tools-version declares the minimum version of Swift required to build this package.
+
+import PackageDescription
+
+let package = Package(
+    name: "Snowdrop",
+    defaultLocalization: "en",
+    platforms: [
+        .macOS("15.4"),
+    ],
+    products: [
+        .executable(
+            name: "Snowdrop",
+            targets: ["Snowdrop"]
+        ),
+        .library(
+            name: "YouTubeAskCore",
+            targets: ["YouTubeAskCore"]
+        ),
+        .executable(
+            name: "api-explorer",
+            targets: ["APIExplorer"]
+        ),
+    ],
+    dependencies: [
+    ],
+    targets: [
+        // Main app executable
+        .executableTarget(
+            name: "Snowdrop",
+            dependencies: [
+                "YouTubeAskCore",
+            ],
+            exclude: [
+                "Resources/AppIcon.icon",
+                "Resources/snowdrop.icns",
+                // The checked-in .lproj files are the SwiftPM/Xcode 26 runtime
+                // resources. build-app.sh compiles the source catalog for the
+                // packaged app to avoid duplicate .strings outputs in SwiftPM.
+                "Resources/Localizable.xcstrings",
+                // App Shortcut phrases belong in the main bundle, which only
+                // build-app.sh assembles; it compiles this catalog there.
+                "Resources/AppShortcuts.xcstrings",
+            ],
+            resources: [
+                .process("Resources/Assets.xcassets"),
+                .process("Resources/Snowdrop.sdef"),
+                .copy("Extensions"),
+            ],
+            swiftSettings: [
+                .swiftLanguageMode(.v6),
+                .enableExperimentalFeature("StrictConcurrency"),
+            ]
+        ),
+        // API Explorer CLI tool
+        .executableTarget(
+            name: "APIExplorer",
+            dependencies: ["YouTubeAskCore"],
+            swiftSettings: [
+                .swiftLanguageMode(.v6),
+            ]
+        ),
+        .testTarget(
+            name: "APIExplorerTests",
+            dependencies: ["APIExplorer"],
+            swiftSettings: [.swiftLanguageMode(.v6)]
+        ),
+        // Shared Foundation-only YouTube Ask parsing and safety core
+        .target(
+            name: "YouTubeAskCore",
+            swiftSettings: [
+                .swiftLanguageMode(.v6),
+                .enableExperimentalFeature("StrictConcurrency"),
+            ]
+        ),
+        // Unit tests for the shared YouTube Ask core
+        .testTarget(
+            name: "YouTubeAskCoreTests",
+            dependencies: ["YouTubeAskCore"],
+            resources: [
+                .process("Fixtures"),
+            ],
+            swiftSettings: [
+                .swiftLanguageMode(.v6),
+            ]
+        ),
+        // Unit tests
+        .testTarget(
+            name: "SnowdropTests",
+            dependencies: ["Snowdrop"],
+            // Tests for Apple-Intelligence-powered features are excluded
+            // because the underlying APIs are macOS 26+ only and Swift
+            // Testing's `@Test` / `@Suite` macros do not compose with
+            // `@available(macOS 26, *)`.
+            exclude: [
+                "AIErrorHandlerTests.swift",
+                "AIToolTests.swift",
+                "CommandBarViewModelTests.swift",
+                "CommandExecutorTests.swift",
+                "CommandIntentParserTests.swift",
+                "FoundationModelsOptimizedPromptIntegrationTests.swift",
+                "FoundationModelsPromptLibraryTests.swift",
+                "FoundationModelsServiceTests.swift",
+                "FoundationModelsTests.swift",
+                "MusicIntentIntegrationTests.swift",
+                "MusicIntentTests.swift",
+            ],
+            resources: [
+                .process("Fixtures"),
+            ],
+            swiftSettings: [
+                .swiftLanguageMode(.v6),
+            ]
+        ),
+    ],
+    swiftLanguageModes: [.v6]
+)

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- URL Scheme Registration -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.varlaam.snowdrop</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>snowdrop</string>
+			</array>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+		</dict>
+	</array>
+
+	<!-- AppleScript Support -->
+	<key>NSAppleScriptEnabled</key>
+	<true/>
+	<key>OSAScriptingDefinition</key>
+	<string>Snowdrop.sdef</string>
+
+	<!-- Core Audio Process Tap (Equalizer) -->
+	<!-- Process tap on macOS 14.2+ is gated by Screen Recording / System Audio Recording TCC, -->
+	<!-- not microphone TCC, despite what the dialog button text might suggest. -->
+	<key>NSAudioCaptureUsageDescription</key>
+	<string>Snowdrop processes its own music output through a built-in equalizer. This permission only covers Snowdrop's own playback — no other app's audio is captured.</string>
+	<key>NSScreenCaptureUsageDescription</key>
+	<string>Snowdrop taps its own audio output (not the screen) so the built-in equalizer can apply effects to your music. No screen content is recorded.</string>
+</dict>
+</plist>

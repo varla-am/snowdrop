@@ -1,0 +1,464 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		5D02B0F084BDD92BB7726033 /* YouTubeAskCore in Frameworks */ = {isa = PBXBuildFile; productRef = 5D0A15160EA373DFB985D8F7 /* YouTubeAskCore */; };
+		5D04D46DD4AF5CDCC2545A8E /* SnowdropWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5D00DB62F70ECBCE632747E9 /* SnowdropWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		5D0ABDC7051C9BD06D598FE7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5D046F86FAA6BBF9AC94A7E4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5D0C00592B38319619612A30;
+			remoteInfo = SnowdropWidgets;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		5D085FA865CBD15CB82182CD /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				5D04D46DD4AF5CDCC2545A8E /* SnowdropWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		5D00469DA98484F3D75C8C2C /* WidgetsInfo.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = WidgetsInfo.plist; sourceTree = "<group>"; };
+		5D00DB62F70ECBCE632747E9 /* SnowdropWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SnowdropWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		5D05236E065056E3ED7DFC65 /* version.env */ = {isa = PBXFileReference; lastKnownFileType = text; path = version.env; sourceTree = "<group>"; };
+		5D07CA9948F0C1392B52AA2D /* SnowdropWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SnowdropWidgets.entitlements; sourceTree = "<group>"; };
+		5D086B3BC083DF59791BE56C /* Snowdrop.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Snowdrop.entitlements; sourceTree = "<group>"; };
+		5D089DE3959A9D5A67012423 /* Snowdrop-Xcode.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Snowdrop-Xcode.entitlements"; sourceTree = "<group>"; };
+		5D0E7E7CA9F4DF8A3E05631F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		5D0F5BF48AA40CAD7891EB70 /* Snowdrop.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Snowdrop.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		5D019AD27801B95BD1F2C6C2 /* Exceptions for "Sources/Snowdrop" folder in "Snowdrop" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Extensions/.gitkeep,
+				Resources/snowdrop.icns,
+			);
+			target = 5D042AEFBAE01D2DFD981F7D /* Snowdrop */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		5D01B042364DD88499BF7622 /* Widgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Widgets;
+			sourceTree = "<group>";
+		};
+		5D096392BC634AB5B55A87EE /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		5D0BB02FE6C4678B79B21586 /* Sources/Snowdrop */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				5D019AD27801B95BD1F2C6C2 /* Exceptions for "Sources/Snowdrop" folder in "Snowdrop" target */,
+			);
+			path = Sources/Snowdrop;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		5D04F6F5CC3FCCF73F75AE9C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5D02B0F084BDD92BB7726033 /* YouTubeAskCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5D09DF949C6E8B6F234C3C31 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		5D01BADDC1D73C1A20F34748 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5D0F5BF48AA40CAD7891EB70 /* Snowdrop.app */,
+				5D00DB62F70ECBCE632747E9 /* SnowdropWidgets.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		5D08D3FC6DB5D0827F168A73 = {
+			isa = PBXGroup;
+			children = (
+				5D0BB02FE6C4678B79B21586 /* Sources/Snowdrop */,
+				5D01B042364DD88499BF7622 /* Widgets */,
+				5D096392BC634AB5B55A87EE /* Shared */,
+				5D0E7E7CA9F4DF8A3E05631F /* Info.plist */,
+				5D086B3BC083DF59791BE56C /* Snowdrop.entitlements */,
+				5D089DE3959A9D5A67012423 /* Snowdrop-Xcode.entitlements */,
+				5D00469DA98484F3D75C8C2C /* WidgetsInfo.plist */,
+				5D07CA9948F0C1392B52AA2D /* SnowdropWidgets.entitlements */,
+				5D05236E065056E3ED7DFC65 /* version.env */,
+				5D01BADDC1D73C1A20F34748 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5D042AEFBAE01D2DFD981F7D /* Snowdrop */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5D0424661E48E6A5563DBA29 /* Build configuration list for PBXNativeTarget "Snowdrop" */;
+			buildPhases = (
+				5D0F2AB5FB218DA8B84623F4 /* Sources */,
+				5D04F6F5CC3FCCF73F75AE9C /* Frameworks */,
+				5D055B558C7EF820E6E00E59 /* Resources */,
+				5D085FA865CBD15CB82182CD /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5D02254342BECCEAFBD04538 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				5D096392BC634AB5B55A87EE /* Shared */,
+				5D0BB02FE6C4678B79B21586 /* Sources/Snowdrop */,
+			);
+			name = Snowdrop;
+			packageProductDependencies = (
+				5D0A15160EA373DFB985D8F7 /* YouTubeAskCore */,
+			);
+			productName = Snowdrop;
+			productReference = 5D0F5BF48AA40CAD7891EB70 /* Snowdrop.app */;
+			productType = "com.apple.product-type.application";
+		};
+		5D0C00592B38319619612A30 /* SnowdropWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5D059CE82CCA8F7B1198E897 /* Build configuration list for PBXNativeTarget "SnowdropWidgets" */;
+			buildPhases = (
+				5D03A6E5D4D0B2FE55F6C545 /* Sources */,
+				5D09DF949C6E8B6F234C3C31 /* Frameworks */,
+				5D0C6BC1A897802EE7DBB615 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				5D01B042364DD88499BF7622 /* Widgets */,
+				5D096392BC634AB5B55A87EE /* Shared */,
+			);
+			name = SnowdropWidgets;
+			productName = SnowdropWidgets;
+			productReference = 5D00DB62F70ECBCE632747E9 /* SnowdropWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		5D046F86FAA6BBF9AC94A7E4 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2700;
+				LastUpgradeCheck = 2700;
+			};
+			buildConfigurationList = 5D05BF065D48D8C23D03623A /* Build configuration list for PBXProject "Snowdrop" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 5D08D3FC6DB5D0827F168A73;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				5D0DCE6DCD9CBEDFFC71950E /* XCLocalSwiftPackageReference "." */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 5D01BADDC1D73C1A20F34748 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5D042AEFBAE01D2DFD981F7D /* Snowdrop */,
+				5D0C00592B38319619612A30 /* SnowdropWidgets */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		5D055B558C7EF820E6E00E59 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5D0C6BC1A897802EE7DBB615 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5D03A6E5D4D0B2FE55F6C545 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5D0F2AB5FB218DA8B84623F4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		5D02254342BECCEAFBD04538 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5D0C00592B38319619612A30 /* SnowdropWidgets */;
+			targetProxy = 5D0ABDC7051C9BD06D598FE7 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		5D04608FF1AE87409B9DB7D1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = SnowdropWidgets.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = G66D3PLMB8;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = WidgetsInfo.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Snowdrop Widgets";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.varlaam.Snowdrop.Widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		5D0518C0B42BD770F1BD6205 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = SnowdropWidgets.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = G66D3PLMB8;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = WidgetsInfo.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Snowdrop Widgets";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.varlaam.Snowdrop.Widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		5D05300D7EBF50D2A4907AFF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Snowdrop-Xcode.entitlements";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = G66D3PLMB8;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Snowdrop;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Varlaam. Based on Kaset by sozercan (MIT).";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -package-name snowdropdir";
+				PRODUCT_BUNDLE_IDENTIFIER = com.varlaam.Snowdrop;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "SNOWDROP_WIDGETS $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		5D06A9C4D09739760F1345B2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Snowdrop-Xcode.entitlements";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = G66D3PLMB8;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Snowdrop;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Varlaam. Based on Kaset by sozercan (MIT).";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -package-name snowdropdir";
+				PRODUCT_BUNDLE_IDENTIFIER = com.varlaam.Snowdrop;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "SNOWDROP_WIDGETS $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		5D0FA9139DD8B03E3F922556 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.4;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		5D0FFE2104CCFAB79205AC64 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				MACOSX_DEPLOYMENT_TARGET = 15.4;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5D0424661E48E6A5563DBA29 /* Build configuration list for PBXNativeTarget "Snowdrop" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5D05300D7EBF50D2A4907AFF /* Debug */,
+				5D06A9C4D09739760F1345B2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5D059CE82CCA8F7B1198E897 /* Build configuration list for PBXNativeTarget "SnowdropWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5D04608FF1AE87409B9DB7D1 /* Debug */,
+				5D0518C0B42BD770F1BD6205 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5D05BF065D48D8C23D03623A /* Build configuration list for PBXProject "Snowdrop" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5D0FA9139DD8B03E3F922556 /* Debug */,
+				5D0FFE2104CCFAB79205AC64 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		5D0DCE6DCD9CBEDFFC71950E /* XCLocalSwiftPackageReference "." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = .;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		5D0A15160EA373DFB985D8F7 /* YouTubeAskCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5D0DCE6DCD9CBEDFFC71950E /* XCLocalSwiftPackageReference "." */;
+			productName = YouTubeAskCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 5D046F86FAA6BBF9AC94A7E4 /* Project object */;
+}
