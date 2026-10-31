@@ -40,3 +40,13 @@ DerivedData/
 * 2
 * 2.*
 * 2/
+
+# AI-agent / contributor boilerplate inherited from Kaset
+CLAUDE.md
+AGENTS.md
+CONTEXT.md
+CONTRIBUTING.md
+ADOPTERS.md
+.agents/
+.claude/
+.vscode/
