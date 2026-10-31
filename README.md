@@ -3,7 +3,7 @@
 </p>
 
 <h1 align="center">Snowdrop</h1>
-<h2 align="center">A minimalistic custom YT Music client for macOS</h1>
+<h2 align="center">A minimalistic custom YT Music client for macOS</h2>
 
 >[!CAUTION]
 >This is unofficial YT Music client! Google don't support that.
@@ -27,6 +27,7 @@
 - Download latest release from Releases
 - Open the `.dmg` file
 - Drag Snowdrop to Applications
+- Gatekeeper will block the app from launching because it's not signed, bypass it by clicking _Right Click -> Open_ or _System Settings -> Accessbility -> Open Anyway_
 
 <h3 align="center"><b>✏️ Building</b></h3>
 
@@ -38,4 +39,4 @@ xcodebuild -project Snowdrop.xcodeproj -scheme Snowdrop -configuration Release b
 
 <h2 align="center"><b>⚙️ Credits</b></h2>
 
-### Snowdrop is a fork of [Kaset](https://github.com/sozercan/kaset) by sozercan, licensed under the MIT license. See [LICENSE](LICENSE).
+**Snowdrop** is a fork of [Kaset](https://github.com/sozercan/kaset) by sozercan, licensed under the MIT license. See [LICENSE](LICENSE).
