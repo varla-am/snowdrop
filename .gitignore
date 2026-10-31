@@ -35,3 +35,8 @@ DerivedData/
 *.log
 *.swp
 *~
+
+# iCloud conflict copies ("File 2.swift")
+* 2
+* 2.*
+* 2/
