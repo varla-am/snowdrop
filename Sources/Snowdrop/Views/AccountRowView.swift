@@ -31,7 +31,7 @@ struct AccountRowView: View {
                         .foregroundStyle(.primary)
 
                     // Handle (if available)
-                    if let handle = account.handle {
+                    if let handle = account.displayHandle {
                         Text(handle)
                             .font(.caption)
                             .lineLimit(1)
@@ -132,7 +132,7 @@ struct AccountRowView: View {
     private var accessibilityLabel: String {
         var label = self.account.name
 
-        if let handle = account.handle {
+        if let handle = account.displayHandle {
             label += ", \(handle)"
         }
 

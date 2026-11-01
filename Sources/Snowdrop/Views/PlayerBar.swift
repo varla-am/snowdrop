@@ -60,6 +60,10 @@ struct PlayerBar: View { // swiftlint:disable:this type_body_length
             }
             .frame(maxWidth: .infinity)
             .frame(height: 52)
+            // Backing under the glass so scrolling content doesn't show through the controls.
+            .background {
+                Capsule().fill(Color(nsColor: .windowBackgroundColor).opacity(0.78))
+            }
             .compatGlass(interactive: true, in: .capsule)
             .compatGlassID("playerBar", in: self.playerNamespace)
         }

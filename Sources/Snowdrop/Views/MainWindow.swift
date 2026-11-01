@@ -699,7 +699,8 @@ struct MainWindow: View { // swiftlint:disable:this type_body_length
                     }
                 }
                 .frame(maxHeight: .infinity)
-                .padding(.top, 12)
+                // Below the top bar so the avatar and search stay reachable.
+                .padding(.top, self.settings.appSource == .music ? TopBar.height : 12)
                 .padding(.bottom, 76) // Space for PlayerBar
                 .transition(.move(edge: .trailing).combined(with: .opacity))
 

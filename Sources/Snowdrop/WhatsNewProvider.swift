@@ -5,11 +5,38 @@ import Foundation
 /// Provides "What's New" entries from GitHub release notes, with a static fallback.
 enum WhatsNewProvider {
     /// GitHub repo for fetching release notes.
-    private static let owner = "sozercan"
+    private static let owner = "varla-am"
     private static let repo = "snowdrop"
 
     /// Static fallback entries used when the network is unavailable.
     static let fallbackCollection: [WhatsNew] = [
+        WhatsNew(
+            version: "1.1.1",
+            title: "What's New in Snowdrop 1.1.1",
+            features: [
+                .init(
+                    icon: "arrow.up.left.and.arrow.down.right",
+                    title: "One Fullscreen",
+                    subtitle: "YouTube videos use a single fullscreen: double click, F or the player bar button"
+                ),
+                .init(
+                    icon: "keyboard",
+                    title: "Reliable Keys",
+                    subtitle: "Space and F work the same everywhere in the player"
+                ),
+                .init(
+                    icon: "sidebar.right",
+                    title: "Panels Below the Top Bar",
+                    subtitle: "Queue and lyrics no longer cover your avatar"
+                ),
+                .init(
+                    icon: "sparkles",
+                    title: "Polish",
+                    subtitle: "Handles show with @, a backing under the player bar, release notes from the right repository"
+                ),
+            ],
+            learnMoreURL: URL(string: "https://github.com/varla-am/snowdrop/releases")
+        ),
         WhatsNew(
             version: "1.0.0",
             title: "What's New in Snowdrop",
@@ -35,7 +62,7 @@ enum WhatsNewProvider {
                     subtitle: "Browse public music and videos without signing in"
                 ),
             ],
-            learnMoreURL: URL(string: "https://github.com/sozercan/kaset/releases")
+            learnMoreURL: URL(string: "https://github.com/varla-am/snowdrop/releases")
         ),
     ]
 
@@ -109,16 +136,15 @@ enum WhatsNewProvider {
         let suffix = version.description.dropFirst(canonicalCore.count)
         var tags = ["v\(version.description)"]
 
-        guard version.patch == 0 else {
-            return tags
+        if version.patch == 0 {
+            tags.append("v\(version.major).\(version.minor)\(suffix)")
+            if version.minor == 0 {
+                tags.append("v\(version.major)\(suffix)")
+            }
         }
 
-        tags.append("v\(version.major).\(version.minor)\(suffix)")
-        if version.minor == 0 {
-            tags.append("v\(version.major)\(suffix)")
-        }
-
-        return tags
+        // Snowdrop releases are tagged `release-vX.Y`; plain `vX.Y` stays as a fallback.
+        return tags.map { "release-\($0)" } + tags
     }
 
     /// Fetches a release by tag — useful for testing a specific version.
@@ -160,7 +186,8 @@ enum WhatsNewProvider {
             return nil
         }
 
-        let versionString = tagName.hasPrefix("v") ? String(tagName.dropFirst()) : tagName
+        let bareTag = tagName.hasPrefix("release-") ? String(tagName.dropFirst("release-".count)) : tagName
+        let versionString = bareTag.hasPrefix("v") ? String(bareTag.dropFirst()) : bareTag
         let version = WhatsNew.Version(stringLiteral: versionString)
         let name = json["name"] as? String
         let title = name ?? "What's New in Snowdrop \(versionString)"

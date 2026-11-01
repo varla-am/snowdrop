@@ -50,7 +50,7 @@ struct SidebarProfileView: View {
                             .lineLimit(1)
                             .foregroundStyle(.primary)
 
-                        if let handle = account.handle {
+                        if let handle = account.displayHandle {
                             Text(handle)
                                 .font(.system(size: 11))
                                 .lineLimit(1)
@@ -244,7 +244,7 @@ struct SidebarProfileView: View {
 
     private func profileAccessibilityLabel(for account: UserAccount) -> String {
         var label = "Profile: \(account.name)"
-        if let handle = account.handle {
+        if let handle = account.displayHandle {
             label += ", \(handle)"
         }
         if self.accountService.hasBrandAccounts {

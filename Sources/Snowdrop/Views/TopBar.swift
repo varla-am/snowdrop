@@ -4,6 +4,9 @@ import SwiftUI
 
 /// Floating bar above the content: section title, a glass search capsule and the account.
 struct TopBar: View {
+    /// Space the bar takes at the top of the window; side panels start below it.
+    static let height: CGFloat = 58
+
     let title: String
     let subtitle: String?
     let onSearch: () -> Void

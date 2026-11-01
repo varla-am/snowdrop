@@ -578,6 +578,21 @@ final class YouTubePlayerService {
         self.finishPlaybackLoading()
     }
 
+    /// Enters or leaves the app's own fullscreen for the current video. The page's
+    /// built-in fullscreen is switched off, so this is the only fullscreen there is.
+    func toggleFullView() {
+        guard self.currentVideo != nil else { return }
+        if self.surfaceLocation == .inline {
+            self.popOutToWindow()
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(250))
+                YouTubeVideoWindowController.shared.toggleFullscreen(returnInlineOnExit: true)
+            }
+        } else {
+            YouTubeVideoWindowController.shared.toggleFullscreen()
+        }
+    }
+
     /// Toggles play/pause.
     func playPause() {
         self.beginYouTubePlaybackIntent()

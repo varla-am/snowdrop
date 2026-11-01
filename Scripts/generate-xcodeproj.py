@@ -343,7 +343,7 @@ def target_cfg(key, name):
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.1.1;
 				OTHER_SWIFT_FLAGS = "$(inherited) -package-name snowdropdir";
 				PRODUCT_BUNDLE_IDENTIFIER = com.varlaam.Snowdrop;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -374,7 +374,7 @@ def widget_cfg(key, name):
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.varlaam.Snowdrop.Widgets;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

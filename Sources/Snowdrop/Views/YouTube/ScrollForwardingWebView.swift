@@ -10,6 +10,16 @@ import WebKit
 /// scrolling over the video while leaving clicks (play/pause, the player
 /// chrome) with the WebView — an overlay would intercept those too.
 final class ScrollForwardingWebView: WKWebView {
+    /// Called on a double click over the video (the page's fullscreen gesture).
+    var onDoubleClick: (@MainActor () -> Void)?
+
+    override func mouseDown(with event: NSEvent) {
+        super.mouseDown(with: event)
+        if event.clickCount == 2, self.forwardsScrollWheel {
+            MainActor.assumeIsolated { self.onDoubleClick?() }
+        }
+    }
+
     override func scrollWheel(with event: NSEvent) {
         guard self.forwardsScrollWheel else {
             super.scrollWheel(with: event)

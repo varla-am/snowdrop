@@ -64,6 +64,7 @@ enum YouTubeItemParser {
             title: title,
             channelName: channelName,
             channelId: channelId,
+            channelAvatarURL: self.channelAvatarURL(fromRenderer: renderer),
             lengthText: lengthText,
             viewCountText: self.text(from: renderer["shortViewCountText"])
                 ?? self.text(from: renderer["viewCountText"]),
@@ -185,6 +186,7 @@ enum YouTubeItemParser {
             title: title,
             channelName: channelName,
             channelId: self.channelBrowseId(of: metadata),
+            channelAvatarURL: self.channelAvatarURL(fromMetadata: metadata),
             lengthText: badgeText.flatMap { $0.contains(":") ? $0 : nil },
             viewCountText: viewCountText,
             publishedText: publishedText,
@@ -317,6 +319,29 @@ enum YouTubeItemParser {
             urlString = "https:" + urlString
         }
         return URL(string: urlString)
+    }
+
+    /// Channel avatar from a legacy renderer's `channelThumbnailSupportedRenderers`.
+    private static func channelAvatarURL(fromRenderer renderer: [String: Any]) -> URL? {
+        let thumbnail = (
+            ((renderer["channelThumbnailSupportedRenderers"] as? [String: Any])?[
+                "channelThumbnailWithLinkRenderer"
+            ] as? [String: Any])?["thumbnail"]
+        )
+        return self.thumbnailURL(fromThumbnail: thumbnail)
+    }
+
+    /// Channel avatar from a lockup's `decoratedAvatarViewModel`.
+    private static func channelAvatarURL(fromMetadata metadata: [String: Any]?) -> URL? {
+        let avatar = (
+            (((metadata?["image"] as? [String: Any])?["decoratedAvatarViewModel"] as? [String: Any])?[
+                "avatar"
+            ] as? [String: Any])?["avatarViewModel"]
+        ) as? [String: Any]
+        guard let sources = (avatar?["image"] as? [String: Any])?["sources"] as? [[String: Any]] else {
+            return nil
+        }
+        return self.bestSourceURL(from: sources)
     }
 
     // MARK: - Private Lockup Helpers

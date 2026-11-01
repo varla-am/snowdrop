@@ -12,7 +12,7 @@ struct VideoCard: View {
             VideoThumbnailView(video: self.video, cornerRadius: 14)
 
             HStack(alignment: .top, spacing: 10) {
-                ChannelMonogram(name: self.video.channelName)
+                ChannelMonogram(name: self.video.channelName, avatarURL: self.video.channelAvatarURL)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(self.video.title)
@@ -149,13 +149,31 @@ struct VideoThumbnailView: View {
 
 // MARK: - ChannelMonogram
 
-/// Round channel badge. The feed has no avatar URL, so it shows the channel's initial
-/// on a colour derived from the name (stable between launches).
+/// Round channel badge: the channel avatar when the feed provides one, otherwise the
+/// channel's initial on a colour derived from the name (stable between launches).
 struct ChannelMonogram: View {
     let name: String?
+    var avatarURL: URL?
     var size: CGFloat = 36
 
     var body: some View {
+        if let avatarURL = self.avatarURL {
+            CachedAsyncImage(url: avatarURL, targetSize: CGSize(width: self.size * 2, height: self.size * 2)) { image in
+                image
+                    .resizable()
+                    .scaledToFill()
+            } placeholder: {
+                self.monogram
+            }
+            .frame(width: self.size, height: self.size)
+            .clipShape(.circle)
+            .accessibilityHidden(true)
+        } else {
+            self.monogram
+        }
+    }
+
+    private var monogram: some View {
         Text(self.initial)
             .font(.system(size: self.size * 0.42, weight: .semibold))
             .foregroundStyle(.white)

@@ -154,7 +154,7 @@ struct HomeView: View {
     private func sectionView(_ section: HomeSection) -> some View {
         if let songs = self.quickPickSongs(in: section) {
             VStack(alignment: .leading, spacing: 12) {
-                HomeSectionHeader(title: section.title, eyebrow: String(localized: "Start radio from a song"))
+                HomeSectionHeader(title: section.title, eyebrow: nil)
                     .padding(.horizontal, DetailContentLayout.horizontalInset)
                 QuickPicksGrid(
                     songs: songs,

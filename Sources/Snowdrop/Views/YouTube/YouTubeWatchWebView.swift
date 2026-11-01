@@ -90,7 +90,15 @@ final class YouTubeWatchWebView {
             documentGeneration: Self.userScriptDocumentGeneration(from: self.documentGeneration)
         )
 
+        // The page's own fullscreen opens a second, different fullscreen window.
+        // Fullscreen goes through the app's video window instead (double click, F).
+        configuration.preferences.isElementFullscreenEnabled = false
+
         let newWebView = ScrollForwardingWebView(frame: .zero, configuration: configuration)
+        newWebView.onDoubleClick = { [weak playerService] in
+            guard let playerService, playerService.currentVideo?.isShort != true else { return }
+            playerService.toggleFullView()
+        }
         newWebView.navigationDelegate = self.coordinator
         newWebView.customUserAgent = WebKitManager.userAgent
         self.webKitManager = webKitManager

@@ -30,6 +30,14 @@ public struct UserAccount: Identifiable, Equatable, Sendable, Hashable {
     /// Channel handle (e.g., "@username"), if available.
     public let handle: String?
 
+    /// The handle as shown to people: always with a leading "@", nil when empty.
+    public var displayHandle: String? {
+        guard let handle = self.handle?.trimmingCharacters(in: .whitespaces), !handle.isEmpty else {
+            return nil
+        }
+        return handle.hasPrefix("@") ? handle : "@\(handle)"
+    }
+
     /// Brand account identifier, nil for primary accounts.
     public let brandId: String?
 

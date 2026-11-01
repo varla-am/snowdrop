@@ -11,6 +11,8 @@ struct YouTubeVideo: Identifiable, Hashable {
     let title: String
     let channelName: String?
     let channelId: String?
+    /// Channel avatar, when the feed item carries one.
+    let channelAvatarURL: URL?
     /// Display duration, e.g. "28:01". `nil` for live streams.
     let lengthText: String?
     /// Short display view count, e.g. "29K views".
@@ -34,6 +36,7 @@ struct YouTubeVideo: Identifiable, Hashable {
         title: String,
         channelName: String? = nil,
         channelId: String? = nil,
+        channelAvatarURL: URL? = nil,
         lengthText: String? = nil,
         viewCountText: String? = nil,
         publishedText: String? = nil,
@@ -46,6 +49,7 @@ struct YouTubeVideo: Identifiable, Hashable {
         self.title = title
         self.channelName = channelName
         self.channelId = channelId
+        self.channelAvatarURL = channelAvatarURL
         self.lengthText = lengthText
         self.viewCountText = viewCountText
         self.publishedText = publishedText

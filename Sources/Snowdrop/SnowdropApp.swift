@@ -66,6 +66,7 @@ struct SnowdropApp: App {
     @State private var searchFocusTrigger = false
 
     @State private var textInputFocusState = TextInputFocusState()
+    @State private var playbackKeyMonitor: PlaybackKeyMonitor
 
     @State private var sidebarNavigationReselectGenerations: [NavigationItem: Int] = [:]
 
@@ -187,6 +188,24 @@ struct SnowdropApp: App {
         _playerService = State(initialValue: player)
         _youtubePlayerService = State(initialValue: youtubePlayer)
         _playbackArbiter = State(initialValue: arbiter)
+        _playbackKeyMonitor = State(initialValue: PlaybackKeyMonitor(
+            togglePlayback: { [weak player, weak youtubePlayer, weak arbiter] in
+                if arbiter?.routesMediaKeysToVideo == true {
+                    youtubePlayer?.playPause()
+                    return true
+                }
+                guard let player, player.currentTrack != nil || player.pendingPlayVideoId != nil else { return false }
+                Task { await player.playPause() }
+                return true
+            },
+            toggleFullscreen: { [weak youtubePlayer] in
+                guard let youtubePlayer, let video = youtubePlayer.currentVideo, !video.isShort,
+                      SettingsManager.shared.appSource == .video || youtubePlayer.surfaceLocation == .floating
+                else { return false }
+                youtubePlayer.toggleFullView()
+                return true
+            }
+        ))
         _sharedClient = State(initialValue: client)
         _sharedYouTubeClient = State(initialValue: youtubeClient)
         _syncedLyricsService = State(initialValue: SyncedLyricsService(providers: [
@@ -277,6 +296,7 @@ struct SnowdropApp: App {
                 .onAppear {
                     DiagnosticsLogger.app.info("SnowdropApp: App content appeared")
                     self.textInputFocusState.startMonitoring()
+                    self.playbackKeyMonitor.start()
                     // Wire up PlayerService to AppDelegate for dock menu and AppleScript actions
                     // This runs synchronously so AppleScript commands can access playerService immediately
                     self.appDelegate.playerService = self.playerService
