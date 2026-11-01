@@ -443,16 +443,27 @@ struct YouTubePlayerBar: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
     }
 
+    /// YouTube's CC button: one click turns captions on or off, right-click picks the language.
     private var compactCaptionsMenu: some View {
-        PlayerBarIconMenu(
-            isSelected: self.youtubePlayer.activeCaptionLanguageCode != nil,
+        let isOn = self.youtubePlayer.activeCaptionLanguageCode != nil
+        return PlayerBarIconButton(
+            action: {
+                Task { await self.youtubePlayer.toggleCaptions() }
+            },
+            isSelected: isOn,
             accessibilityID: AccessibilityID.YouTubeContent.captionsButton,
-            accessibilityLabel: String(localized: "Closed captions")
-        ) {
+            accessibilityLabel: String(localized: "Subtitles/closed captions"),
+            icon: {
+                YouTubeCaptionsIcon(isOn: isOn)
+                    .foregroundStyle(.primary)
+            }
+        )
+        .help(String(localized: "Subtitles/closed captions"))
+        .contextMenu {
             Button {
                 self.youtubePlayer.selectCaptionTrack(languageCode: nil)
             } label: {
-                if self.youtubePlayer.activeCaptionLanguageCode == nil {
+                if !isOn {
                     Label(String(localized: "Off"), systemImage: "checkmark")
                 } else {
                     Text("Off", comment: "Captions off menu item")
@@ -470,11 +481,6 @@ struct YouTubePlayerBar: View {
                     }
                 }
             }
-        } icon: {
-            Image(systemName: self.youtubePlayer.activeCaptionLanguageCode == nil ? "captions.bubble" : "captions.bubble.fill")
-                .font(.system(size: 16, weight: .regular))
-                .frame(width: 16, height: 16)
-                .foregroundStyle(self.youtubePlayer.activeCaptionLanguageCode == nil ? .primary : Self.brandAccent)
         }
         .disabled(self.youtubePlayer.currentVideo == nil)
     }
@@ -817,4 +823,31 @@ extension AccessibilityID.YouTubeContent {
     static let watchFullView = "youtubeContent.watchFullView"
     static let captionsButton = "youtubeContent.captionsButton"
     static let qualityButton = "youtubeContent.qualityButton"
+}
+
+// MARK: - YouTubeCaptionsIcon
+
+/// The CC glyph YouTube draws: a rounded rectangle holding "CC", with a red underline while captions are on.
+struct YouTubeCaptionsIcon: View {
+    let isOn: Bool
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: 3.5, style: .continuous)
+            .strokeBorder(lineWidth: 1.6)
+            .frame(width: 20, height: 14)
+            .overlay {
+                Text("CC")
+                    .font(.system(size: 8, weight: .heavy, design: .rounded))
+                    .kerning(0.2)
+            }
+            .overlay(alignment: .bottom) {
+                Capsule()
+                    .fill(.red)
+                    .frame(width: 16, height: 2)
+                    .offset(y: 5)
+                    .opacity(self.isOn ? 1 : 0)
+            }
+            .frame(width: 22, height: 20)
+            .accessibilityHidden(true)
+    }
 }

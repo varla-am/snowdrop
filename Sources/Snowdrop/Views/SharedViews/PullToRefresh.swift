@@ -11,9 +11,10 @@ struct PullToRefreshState: Equatable {
         case settling
     }
 
-    static let threshold: CGFloat = 64
+    // Trackpad rubber-banding damps the overscroll heavily, so a 64 pt pull needed a long, hard swipe.
+    static let threshold: CGFloat = 30
 
-    static let disarmThreshold: CGFloat = 48
+    static let disarmThreshold: CGFloat = 20
 
     private static let restTolerance: CGFloat = 0.5
 

@@ -550,39 +550,57 @@ struct MainWindow: View { // swiftlint:disable:this type_body_length
         ZStack(alignment: .trailing) {
             // Icon rail on the left, floating top bar over the detail.
             HStack(spacing: 0) {
-                Sidebar(
-                    selection: self.$navigationSelection,
-                    pinnedSelection: self.$selectedSidebarPinnedItem,
-                    client: self.client,
-                    onReselectNavigationItem: { item in
-                        self.sidebarNavigationReselectGenerations.wrappedValue[item, default: 0] += 1
-                        if item == .search {
-                            Task { @MainActor in
-                                try? await Task.sleep(for: .milliseconds(100))
-                                self.searchFocusTrigger.wrappedValue = true
+                if self.settings.appSource == .music {
+                    Sidebar(
+                        selection: self.$navigationSelection,
+                        pinnedSelection: self.$selectedSidebarPinnedItem,
+                        client: self.client,
+                        onReselectNavigationItem: { item in
+                            self.sidebarNavigationReselectGenerations.wrappedValue[item, default: 0] += 1
+                            if item == .search {
+                                Task { @MainActor in
+                                    try? await Task.sleep(for: .milliseconds(100))
+                                    self.searchFocusTrigger.wrappedValue = true
+                                }
                             }
+                        },
+                        onReselectPinnedItem: { item in
+                            guard !(self.pinnedNavigationPaths[item.contentId]?.isEmpty ?? true) else { return }
+                            self.pinnedNavigationPaths[item.contentId] = NavigationPath()
                         }
-                    },
-                    onReselectPinnedItem: { item in
-                        guard !(self.pinnedNavigationPaths[item.contentId]?.isEmpty ?? true) else { return }
-                        self.pinnedNavigationPaths[item.contentId] = NavigationPath()
-                    }
-                )
+                    )
 
-                // A plain VStack, not a safeAreaInset: pushed cards run edge to edge
-                // inside their NavigationStack and ignored the inset, so their header
-                // slid under the bar.
-                VStack(spacing: 0) {
-                    TopBar(
-                        title: self.topBarTitle,
-                        subtitle: self.topBarSubtitle,
-                        onSearch: self.openSearch
+                    // A plain VStack, not a safeAreaInset: pushed cards run edge to edge
+                    // inside their NavigationStack and ignored the inset, so their header
+                    // slid under the bar.
+                    VStack(spacing: 0) {
+                        TopBar(
+                            title: self.topBarTitle,
+                            subtitle: self.topBarSubtitle,
+                            onSearch: self.openSearch
+                        )
+                        self.detailView(
+                            for: self.navigationSelection,
+                            pinnedItem: self.selectedSidebarPinnedItem,
+                            client: self.client
+                        )
+                    }
+                } else {
+                    YouTubeSidebar(
+                        selection: self.$youtubeNavigationSelection,
+                        onReselect: { _ in
+                            self.youtubeStore.navigationPath = NavigationPath()
+                        }
                     )
-                    self.detailView(
-                        for: self.navigationSelection,
-                        pinnedItem: self.selectedSidebarPinnedItem,
-                        client: self.client
+
+                    // A floating rounded panel beside the rail, not a hard-edged slab
+                    // butted against it.
+                    YouTubeContentView(
+                        selection: self.youtubeNavigationSelection,
+                        store: self.youtubeStore
                     )
+                    .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    .padding(8)
                 }
             }
             .id(self.contentResetID)

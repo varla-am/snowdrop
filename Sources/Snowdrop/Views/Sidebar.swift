@@ -57,6 +57,8 @@ struct Sidebar: View {
                 }
                 .padding(.vertical, 2)
             }
+
+            self.youtubeSwitchButton
         }
         .padding(.bottom, 10)
         .padding(.horizontal, 7)
@@ -107,6 +109,26 @@ struct Sidebar: View {
         .buttonStyle(.plain)
         .help(String(localized: "Create Playlist"))
         .accessibilityLabel(String(localized: "Create Playlist"))
+    }
+
+    /// Flips the whole app to the regular YouTube experience; its sidebar has the toggle back.
+    private var youtubeSwitchButton: some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                SettingsManager.shared.appSource = .video
+            }
+            HapticService.navigation()
+        } label: {
+            Image(systemName: AppSource.video.icon)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 40, height: 34)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(String(localized: "Switch to YouTube"))
+        .accessibilityLabel(String(localized: "Switch to YouTube"))
+        .accessibilityIdentifier(AccessibilityID.SourceToggle.segment(for: .video))
     }
 
     private var hasPersonalAccount: Bool {
@@ -244,7 +266,7 @@ struct Sidebar: View {
 // MARK: - RailButton
 
 /// One icon in the rail. The selection is a glass pill that slides between items.
-private struct RailButton: View {
+struct RailButton: View {
     let title: String
     let systemImage: String
     let isSelected: Bool

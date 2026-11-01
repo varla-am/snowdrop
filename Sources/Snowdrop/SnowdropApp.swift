@@ -281,7 +281,7 @@ struct SnowdropApp: App {
                     // This runs synchronously so AppleScript commands can access playerService immediately
                     self.appDelegate.playerService = self.playerService
                     // The floating player comes back if it was open when Snowdrop last quit.
-                    OverlayController.shared.restore(playerService: self.playerService)
+                    OverlayController.shared.restore(playerService: self.playerService, youtubePlayer: self.youtubePlayerService)
                     // Drain any cold-launch URLs once `onReceive` below is subscribed.
                     self.appDelegate.beginOpenURLDelivery()
                     AppIntentsBridge.shared.setShowMainWindowHandler { self.showMainWindow() }
@@ -590,7 +590,7 @@ struct SnowdropApp: App {
                 .keyboardShortcut("m", modifiers: [.command, .shift])
 
                 Button(OverlayController.shared.isVisible ? "Hide Floating Player" : "Show Floating Player") {
-                    OverlayController.shared.toggle(playerService: self.playerService)
+                    OverlayController.shared.toggle(playerService: self.playerService, youtubePlayer: self.youtubePlayerService)
                 }
                 .keyboardShortcut("o", modifiers: [.command, .option])
 

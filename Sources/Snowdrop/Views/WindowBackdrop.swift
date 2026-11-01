@@ -19,7 +19,7 @@ struct WindowBackdrop: View {
                     // Frost first, so windows behind this one stay unreadable and the
                     // cards on top stay legible; then real Liquid Glass over it.
                     BehindWindowBlur()
-                        .opacity(0.35 + 0.5 * self.transparency)
+                        .opacity(0.7 + 0.3 * self.transparency)
                     WindowGlass(
                         tint: NSColor(self.theme.glow.0),
                         tintAlpha: 0.10 + 0.30 * (1 - self.transparency),

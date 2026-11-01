@@ -6,8 +6,11 @@ import SwiftUI
 struct YouTubeHomeView: View {
     let viewModel: YouTubeHomeViewModel
 
+    /// The shelf chip showing in the grid; `nil` is the main feed.
+    @State private var selectedChipID: String?
+
     private static let columns = [
-        GridItem(.adaptive(minimum: 210, maximum: 320), spacing: 16),
+        GridItem(.adaptive(minimum: 270, maximum: 420), spacing: 18, alignment: .top),
     ]
 
     var body: some View {
@@ -59,118 +62,123 @@ struct YouTubeHomeView: View {
         }
     }
 
-    /// Personalized rails (Continue Watching, shelves, topics) stacked above
-    /// the "For you" recommendation grid. The ScrollView track stays
-    /// edge-to-edge so rails slide under the floating glass sidebar; each rail
-    /// and the grid restore their own resting inset.
-    ///
-    /// The grid publishes first (fast cached feed) and the rails arrive a moment
-    /// later (slow topic/history browses). Animating on the rails' identities
-    /// makes them fade in and the grid ease down, so the late arrival reads as
-    /// intentional motion instead of an abrupt snap.
+    /// YouTube's own layout: a row of topic chips, then one grid of recommendations.
+    /// The shelves and topic feeds the view model builds become chips; "All" shows the
+    /// main feed and a chip swaps the grid to that shelf.
     private var feedContent: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 32) {
-                ForEach(self.viewModel.sections) { section in
-                    self.sectionRail(section)
-                        .transition(.opacity)
-                }
-
-                if self.viewModel.hasMoreTopicRails || self.viewModel.isLoadingTopicRails {
-                    LoadMoreFooter(
-                        isLoading: self.viewModel.isLoadingTopicRails,
-                        title: "Load more topics",
-                        loadingTitle: "Loading topics...",
-                        autoLoad: true,
-                        autoLoadTrigger: self.viewModel.sections.count
-                    ) {
-                        await self.viewModel.loadMoreTopicRails()
-                    }
-                    .transition(.opacity)
-                }
-
-                // Render the grid whenever there are flat videos OR more pages
-                // to fetch. The pagination sentinel lives inside the grid, so
-                // gating the whole grid on a non-empty `videos` would strand the
-                // continuation when the first page's flat videos are all shelf
-                // videos (filtered out) but more pages remain.
-                if !self.viewModel.videos.isEmpty || self.viewModel.hasMoreVideos {
-                    self.forYouGrid
-                }
+            VStack(alignment: .leading, spacing: 18) {
+                self.chipBar
+                self.videoGrid
             }
-            .padding(.vertical, 20)
-            // Key on the rail identities (the array isn't Equatable). When the
-            // late rails land, this animates their insertion and the grid's
-            // downward shift in one smooth move.
-            .animation(AppAnimation.smooth, value: self.viewModel.sections.map(\.id))
+            .padding(.top, 8)
+            .padding(.bottom, 24)
         }
         .pullToRefresh {
             await self.viewModel.refresh()
         }
     }
 
-    /// A single horizontal rail of video cards with a title header.
-    private func sectionRail(_ section: YouTubeHomeSection) -> some View {
-        CarouselShelfSection(
-            accessibilityLabel: section.title,
-            items: section.videos,
-            itemAlignment: .top,
-            contentInset: DetailContentLayout.horizontalInset
-        ) {
-            Text(section.title)
-                .font(.title2)
-                .fontWeight(.semibold)
-        } itemContent: { video in
-            NavigationLink(value: YouTubeRoute.watch(video)) {
-                // VideoCard has no intrinsic width; pin it for the horizontal
-                // LazyHStack (matches the music video card width).
-                VideoCard(video: video)
-                    .frame(width: 284)
+    // MARK: Chips
+
+    private var chipBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 10) {
+                self.chip(title: String(localized: "All"), id: nil)
+
+                ForEach(self.viewModel.sections) { section in
+                    self.chip(title: section.title, id: section.id)
+                }
+
+                if self.viewModel.hasMoreTopicRails || self.viewModel.isLoadingTopicRails {
+                    Button {
+                        Task { await self.viewModel.loadMoreTopicRails() }
+                    } label: {
+                        Group {
+                            if self.viewModel.isLoadingTopicRails {
+                                ProgressView().controlSize(.small)
+                            } else {
+                                Image(systemName: "ellipsis")
+                            }
+                        }
+                        .frame(width: 34, height: 30)
+                        .background(.primary.opacity(0.1), in: .capsule)
+                    }
+                    .buttonStyle(.plain)
+                    .help(String(localized: "Load more topics"))
+                }
             }
-            .buttonStyle(.interactiveCard)
+            .padding(.horizontal, DetailContentLayout.horizontalInset)
         }
     }
 
-    /// The flat "For you" recommendation grid with infinite-scroll pagination.
-    private var forYouGrid: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Show the heading only when there are rails above it AND grid
-            // videos to label; an empty grid (just the pagination sentinel)
-            // should not show a dangling "For you" title.
-            if !self.viewModel.sections.isEmpty, !self.viewModel.videos.isEmpty {
-                Text("For you", comment: "YouTube home recommendation grid heading")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                    .padding(.horizontal, DetailContentLayout.horizontalInset)
+    private func chip(title: String, id: String?) -> some View {
+        let isSelected = self.selectedChipID == id
+        return Button {
+            withAnimation(AppAnimation.quick) {
+                self.selectedChipID = id
             }
-
-            LazyVGrid(columns: Self.columns, spacing: 20) {
-                ForEach(self.viewModel.videos) { video in
-                    NavigationLink(value: YouTubeRoute.watch(video)) {
-                        VideoCard(video: video)
-                    }
-                    .buttonStyle(.interactiveCard)
-                }
-
-                if self.viewModel.hasMoreVideos {
-                    ProgressView()
-                        .controlSize(.small)
-                        .gridCellColumns(1)
-                        .task(id: self.viewModel.videos.count) {
-                            await self.viewModel.loadMore()
-                        }
-                }
-            }
-            // Vertical grid insets its resting content; rails above keep their
-            // own edge-to-edge track so they slide under the glass sidebar.
-            .padding(.horizontal, DetailContentLayout.horizontalInset)
+        } label: {
+            Text(title)
+                .font(.system(size: 13, weight: .medium))
+                .lineLimit(1)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 7)
+                .foregroundStyle(isSelected ? Color(nsColor: .windowBackgroundColor) : Color.primary)
+                .background(
+                    isSelected ? AnyShapeStyle(.primary) : AnyShapeStyle(.primary.opacity(0.1)),
+                    in: .capsule
+                )
         }
-        // Warm the first screenful of thumbnails as soon as the grid publishes
-        // so they decode ahead of scroll instead of popping in one-by-one. Keyed
-        // on the first batch's IDs so a fresh load re-warms; ImageCache.prefetch
-        // caps concurrency and skips already-cached URLs.
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    // MARK: Grid
+
+    /// The grid's videos: the selected shelf, else the main feed (falling back to the
+    /// shelves' videos when the feed itself is empty).
+    private var displayedVideos: [YouTubeVideo] {
+        if let id = self.selectedChipID,
+           let section = self.viewModel.sections.first(where: { $0.id == id })
+        {
+            return section.videos
+        }
+        if !self.viewModel.videos.isEmpty {
+            return self.viewModel.videos
+        }
+        var seen = Set<String>()
+        return self.viewModel.sections.flatMap(\.videos).filter { seen.insert($0.videoId).inserted }
+    }
+
+    private var isShowingMainFeed: Bool {
+        guard let id = self.selectedChipID else { return true }
+        return !self.viewModel.sections.contains { $0.id == id }
+    }
+
+    private var videoGrid: some View {
+        LazyVGrid(columns: Self.columns, spacing: 28) {
+            ForEach(self.displayedVideos) { video in
+                NavigationLink(value: YouTubeRoute.watch(video)) {
+                    VideoCard(video: video)
+                }
+                .buttonStyle(.interactiveCard)
+            }
+
+            if self.isShowingMainFeed, self.viewModel.hasMoreVideos {
+                ProgressView()
+                    .controlSize(.small)
+                    .gridCellColumns(1)
+                    .task(id: self.viewModel.videos.count) {
+                        await self.viewModel.loadMore()
+                    }
+            }
+        }
+        .padding(.horizontal, DetailContentLayout.horizontalInset)
+        // Warm the first screenful of thumbnails as soon as the grid publishes so they
+        // decode ahead of scroll. Keyed on the first batch's IDs so a fresh load re-warms.
         .task(id: self.firstThumbnailBatchKey) {
-            let urls = self.viewModel.videos.prefix(12).compactMap(\.thumbnailURL)
+            let urls = self.displayedVideos.prefix(12).compactMap(\.thumbnailURL)
             guard !urls.isEmpty else { return }
             await ImageCache.shared.prefetch(
                 urls: Array(urls),
@@ -183,7 +191,7 @@ struct YouTubeHomeView: View {
     /// a re-warm when the grid's first page changes (a fresh load), not on every
     /// pagination append.
     private var firstThumbnailBatchKey: String {
-        self.viewModel.videos.prefix(12).map(\.videoId).joined(separator: ",")
+        self.displayedVideos.prefix(12).map(\.videoId).joined(separator: ",")
     }
 
     private var loadingGrid: some View {

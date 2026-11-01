@@ -45,18 +45,18 @@ final class OverlayController {
     private init() {}
 
     /// Reopens the overlay at launch if it was on when Snowdrop last quit.
-    func restore(playerService: PlayerService) {
+    func restore(playerService: PlayerService, youtubePlayer: YouTubePlayerService) {
         if self.defaults.bool(forKey: Keys.visible) {
-            self.show(playerService: playerService)
+            self.show(playerService: playerService, youtubePlayer: youtubePlayer)
         }
     }
 
-    func toggle(playerService: PlayerService) {
-        self.isVisible ? self.hide() : self.show(playerService: playerService)
+    func toggle(playerService: PlayerService, youtubePlayer: YouTubePlayerService) {
+        self.isVisible ? self.hide() : self.show(playerService: playerService, youtubePlayer: youtubePlayer)
     }
 
-    func show(playerService: PlayerService) {
-        let panel = self.panel ?? self.makePanel(playerService: playerService)
+    func show(playerService: PlayerService, youtubePlayer: YouTubePlayerService) {
+        let panel = self.panel ?? self.makePanel(playerService: playerService, youtubePlayer: youtubePlayer)
         self.panel = panel
         panel.orderFrontRegardless()
         self.isVisible = true
@@ -73,7 +73,7 @@ final class OverlayController {
 
     // MARK: Panel
 
-    private func makePanel(playerService: PlayerService) -> NSPanel {
+    private func makePanel(playerService: PlayerService, youtubePlayer: YouTubePlayerService) -> NSPanel {
         let panel = OverlayPanel(
             contentRect: NSRect(origin: .zero, size: Self.size),
             styleMask: [.borderless, .nonactivatingPanel],
@@ -100,6 +100,7 @@ final class OverlayController {
         let hosting = FirstMouseHostingView(
             rootView: OverlayView(onClose: { [weak self] in self?.hide() })
                 .environment(playerService)
+                .environment(youtubePlayer)
         )
         hosting.frame = NSRect(origin: .zero, size: Self.size)
         panel.contentView = hosting
@@ -243,6 +244,7 @@ private final class OverlayPanel: NSPanel {
 
 struct OverlayView: View {
     @Environment(PlayerService.self) private var playerService
+    @Environment(YouTubePlayerService.self) private var youtubePlayer
     @State private var isHovering = false
     let onClose: () -> Void
 
@@ -250,14 +252,36 @@ struct OverlayView: View {
         self.playerService.currentTrack
     }
 
+    /// True while a YouTube video is what's playing (or what the app is showing), so the
+    /// pill follows it instead of the music queue.
+    private var isVideo: Bool {
+        guard self.youtubePlayer.currentVideo != nil else { return false }
+        return self.youtubePlayer.isPlaying
+            || (SettingsManager.shared.appSource == .video && !self.playerService.isPlaying)
+    }
+
+    private var titleText: String {
+        if self.isVideo { return self.youtubePlayer.currentVideo?.title ?? "Nothing playing" }
+        return self.track?.title ?? "Nothing playing"
+    }
+
+    private var subtitleText: String {
+        if self.isVideo { return self.youtubePlayer.currentVideo?.channelName ?? "YouTube" }
+        return self.track?.artistsDisplay ?? "Snowdrop"
+    }
+
+    private var isPlayingNow: Bool {
+        self.isVideo ? self.youtubePlayer.isPlaying : self.playerService.isPlaying
+    }
+
     var body: some View {
         HStack(spacing: 12) {
             self.cover
             VStack(alignment: .leading, spacing: 2) {
-                Text(self.track?.title ?? "Nothing playing")
+                Text(self.titleText)
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                     .lineLimit(1)
-                Text(self.track?.artistsDisplay ?? "Snowdrop")
+                Text(self.subtitleText)
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -317,13 +341,18 @@ struct OverlayView: View {
         .buttonStyle(.plain)
     }
 
+    private var coverURL: URL? {
+        if self.isVideo { return self.youtubePlayer.currentVideo?.thumbnailURL }
+        return self.track?.thumbnailURL?.highQualityThumbnailURL ?? self.track?.thumbnailURL
+    }
+
     private var cover: some View {
-        AsyncImage(url: self.track?.thumbnailURL?.highQualityThumbnailURL ?? self.track?.thumbnailURL) { image in
+        AsyncImage(url: self.coverURL) { image in
             image.resizable().scaledToFill()
         } placeholder: {
             ZStack {
                 Color.gray.opacity(0.25)
-                Image(systemName: "music.note").foregroundStyle(.secondary)
+                Image(systemName: self.isVideo ? "play.rectangle.fill" : "music.note").foregroundStyle(.secondary)
             }
         }
         .frame(width: 52, height: 52)
@@ -333,9 +362,15 @@ struct OverlayView: View {
 
     private var controls: some View {
         HStack(spacing: 2) {
-            self.button("backward.fill", size: 13) { await self.playerService.previous() }
-            self.button(self.playerService.isPlaying ? "pause.fill" : "play.fill", size: 17) { await self.playerService.playPause() }
-            self.button("forward.fill", size: 13) { await self.playerService.next() }
+            self.button("backward.fill", size: 13) {
+                if self.isVideo { self.youtubePlayer.skipBackward() } else { await self.playerService.previous() }
+            }
+            self.button(self.isPlayingNow ? "pause.fill" : "play.fill", size: 17) {
+                if self.isVideo { self.youtubePlayer.playPause() } else { await self.playerService.playPause() }
+            }
+            self.button("forward.fill", size: 13) {
+                if self.isVideo { await self.youtubePlayer.skipForward() } else { await self.playerService.next() }
+            }
         }
     }
 
@@ -353,10 +388,11 @@ struct OverlayView: View {
 
     private var progressBar: some View {
         GeometryReader { proxy in
-            let duration = max(self.playerService.duration, 1)
+            let duration = max(self.isVideo ? self.youtubePlayer.duration : self.playerService.duration, 1)
+            let progress = self.isVideo ? self.youtubePlayer.progress : self.playerService.progress
             Capsule()
                 .fill(.tint.opacity(0.7))
-                .frame(width: max(0, proxy.size.width - 40) * min(1, self.playerService.progress / duration), height: 2.5)
+                .frame(width: max(0, proxy.size.width - 40) * min(1, progress / duration), height: 2.5)
                 .padding(.leading, 20)
                 .padding(.bottom, 6)
                 .frame(maxHeight: .infinity, alignment: .bottom)

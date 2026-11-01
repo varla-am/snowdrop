@@ -2,37 +2,40 @@ import SwiftUI
 
 // MARK: - VideoCard
 
-/// Grid card for a YouTube video: 16:9 thumbnail with duration badge,
-/// title, and channel/meta lines.
+/// Grid card laid out like YouTube's own: 16:9 thumbnail with a duration badge,
+/// then a channel avatar beside the two-line title, channel and "views · date".
 struct VideoCard: View {
     let video: YouTubeVideo
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            VideoThumbnailView(video: self.video)
+        VStack(alignment: .leading, spacing: 10) {
+            VideoThumbnailView(video: self.video, cornerRadius: 14)
 
-            VStack(alignment: .leading, spacing: 3) {
-                Text(self.video.title)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
+            HStack(alignment: .top, spacing: 10) {
+                ChannelMonogram(name: self.video.channelName)
 
-                if let channelName = self.video.channelName {
-                    Text(channelName)
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(self.video.title)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
 
-                if let metaText = self.metaText {
-                    Text(metaText)
-                        .font(.system(size: 11))
-                        .foregroundStyle(.tertiary)
-                        .lineLimit(1)
+                    if let channelName = self.video.channelName {
+                        Text(channelName)
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+
+                    if let metaText = self.metaText {
+                        Text(metaText)
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
                 }
             }
-            .padding(.horizontal, 2)
         }
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
@@ -68,6 +71,7 @@ struct VideoCard: View {
 struct VideoThumbnailView: View {
     let video: YouTubeVideo
     var targetSize = CGSize(width: 320, height: 180)
+    var cornerRadius: CGFloat = 8
 
     var body: some View {
         CachedAsyncImage(
@@ -92,7 +96,7 @@ struct VideoThumbnailView: View {
                 self.watchedProgressBar(percent: percent)
             }
         }
-        .clipShape(.rect(cornerRadius: 8))
+        .clipShape(.rect(cornerRadius: self.cornerRadius))
         .overlay(alignment: .bottomTrailing) {
             self.badge
         }
@@ -140,6 +144,33 @@ struct VideoThumbnailView: View {
                 .foregroundStyle(.white)
                 .padding(6)
         }
+    }
+}
+
+// MARK: - ChannelMonogram
+
+/// Round channel badge. The feed has no avatar URL, so it shows the channel's initial
+/// on a colour derived from the name (stable between launches).
+struct ChannelMonogram: View {
+    let name: String?
+    var size: CGFloat = 36
+
+    var body: some View {
+        Text(self.initial)
+            .font(.system(size: self.size * 0.42, weight: .semibold))
+            .foregroundStyle(.white)
+            .frame(width: self.size, height: self.size)
+            .background(self.color, in: .circle)
+            .accessibilityHidden(true)
+    }
+
+    private var initial: String {
+        self.name?.trimmingCharacters(in: .whitespaces).first.map { String($0).uppercased() } ?? "•"
+    }
+
+    private var color: Color {
+        let hash = (self.name ?? "").unicodeScalars.reduce(UInt32(5381)) { ($0 &* 33) &+ $1.value }
+        return Color(hue: Double(hash % 360) / 360, saturation: 0.45, brightness: 0.6)
     }
 }
 

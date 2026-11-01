@@ -264,6 +264,9 @@ final class YouTubePlayerService {
     /// Language code of the active caption track (nil = captions off).
     private(set) var activeCaptionLanguageCode: String?
 
+    /// The track the CC button turned off last, so the next click restores it.
+    private var lastCaptionLanguageCode: String?
+
     /// Quality levels available on the current watch page.
     private(set) var qualityLevels: [String] = []
 
@@ -1049,6 +1052,32 @@ final class YouTubePlayerService {
         self.activeCaptionLanguageCode = languageCode
         self.playbackController.setCaptionTrack(languageCode: languageCode)
         HapticService.toggle()
+    }
+
+    /// YouTube-style CC button: flips captions on or off. Turning them on picks the
+    /// track used last, else one in the system language, else the first offered.
+    func toggleCaptions() async {
+        if let active = self.activeCaptionLanguageCode {
+            self.lastCaptionLanguageCode = active
+            self.selectCaptionTrack(languageCode: nil)
+            return
+        }
+        if self.captionTracks.isEmpty {
+            await self.refreshPlaybackOptions()
+        }
+        let systemLanguage = Locale.current.language.languageCode?.identifier
+        let track = self.captionTracks.first { $0.languageCode == self.lastCaptionLanguageCode }
+            ?? self.captionTracks.first { track in
+                guard let systemLanguage else { return false }
+                return track.languageCode == systemLanguage || track.languageCode.hasSuffix(".\(systemLanguage)")
+            }
+            ?? self.captionTracks.first
+        guard let track else {
+            self.logger.info("No caption tracks available for this video")
+            HapticService.error()
+            return
+        }
+        self.selectCaptionTrack(languageCode: track.languageCode)
     }
 
     /// Selects a playback quality level.

@@ -1991,6 +1991,10 @@ final class YTMusicClient: YTMusicClientProtocol {
     }
 
     /// Makes a request to the API with optional authentication, caching, and retry.
+    private static let libraryMutationEndpoints: Set<String> = [
+        "like/like", "like/removelike", "playlist/delete", "browse/edit_playlist",
+    ]
+
     private func request(
         _ endpoint: String,
         body: [String: Any],
@@ -2131,6 +2135,11 @@ final class YTMusicClient: YTMusicClientProtocol {
             return json
         case let .authError(statusCode):
             self.logger.error("Auth error: HTTP \(statusCode)")
+            // A 403 on a library mutation means "not allowed for this item" (e.g. removing your own
+            // playlist via removelike), not a dead session; signing out here wipes a valid login.
+            if statusCode == 403, Self.libraryMutationEndpoints.contains(endpoint) {
+                throw YTMusicError.apiError(message: "HTTP 403", code: 403)
+            }
             if authenticated {
                 if let authIdentityGeneration {
                     self.authService.sessionExpired(ifIdentityGenerationMatches: authIdentityGeneration)

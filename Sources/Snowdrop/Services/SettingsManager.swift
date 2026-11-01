@@ -261,8 +261,6 @@ final class SettingsManager {
     /// The active content source (YouTube Music or regular YouTube).
     var appSource: AppSource {
         didSet {
-            // Snowdrop is music-only; the regular YouTube source is not offered.
-            if self.appSource != .music { self.appSource = .music }
             UserDefaults.standard.set(self.appSource.rawValue, forKey: Keys.appSource)
         }
     }
@@ -641,7 +639,7 @@ final class SettingsManager {
         if let rawValue = UserDefaults.standard.string(forKey: Keys.appSource),
            let source = AppSource(rawValue: rawValue)
         {
-            self.appSource = source == .music ? source : .music
+            self.appSource = source
         } else {
             self.appSource = .music
         }
