@@ -4,9 +4,7 @@ import SwiftUI
 struct YouTubeChannelView: View {
     @State private var viewModel: YouTubeChannelViewModel
 
-    private static let columns = [
-        GridItem(.adaptive(minimum: 210, maximum: 320), spacing: 16),
-    ]
+    private static let columns = YouTubeGridLayout.columns
 
     init(channelId: String, client: any YouTubeClientProtocol) {
         self._viewModel = State(
@@ -51,7 +49,7 @@ struct YouTubeChannelView: View {
                         Label(String(localized: "No videos"), systemImage: "play.rectangle")
                     }
                 } else {
-                    LazyVGrid(columns: Self.columns, spacing: 20) {
+                    LazyVGrid(columns: Self.columns, spacing: YouTubeGridLayout.rowSpacing) {
                         ForEach(detail.videos) { video in
                             NavigationLink(value: YouTubeRoute.watch(video)) {
                                 VideoCard(video: video)

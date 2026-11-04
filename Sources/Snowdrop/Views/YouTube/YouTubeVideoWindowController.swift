@@ -184,6 +184,16 @@ final class YouTubeVideoWindowController {
             window.setContentSize(normalized)
         }
 
+        // A pop-out is a small window. If a saved frame came back screen-sized (it would look like
+        // fullscreen), start from the default size and corner instead.
+        if let visible = (window.screen ?? NSScreen.main)?.visibleFrame,
+           window.frame.width >= visible.width * 0.9, window.frame.height >= visible.height * 0.9
+        {
+            window.setContentSize(NSSize(width: 640, height: 360))
+            self.positionAtDefaultLocation(window: window)
+        }
+        DiagnosticsLogger.player.info("YouTubeVideoWindow: show frame=\(NSStringFromRect(window.frame), privacy: .public) screen=\(NSStringFromRect((window.screen ?? NSScreen.main)?.visibleFrame ?? .zero), privacy: .public) fullscreen=\(window.styleMask.contains(.fullScreen))")
+
         window.orderFront(nil)
         self.window = window
         self.isClosing = false

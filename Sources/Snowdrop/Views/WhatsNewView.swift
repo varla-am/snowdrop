@@ -9,7 +9,6 @@ struct WhatsNewView: View {
     private enum Layout {
         static let sheetWidth: CGFloat = 640
         static let sheetHeight: CGFloat = 620
-        static let contentMinHeight: CGFloat = 280
     }
 
     @Environment(\.colorScheme) private var colorScheme
@@ -94,25 +93,15 @@ struct WhatsNewView: View {
         }
     }
 
-    @ViewBuilder
     private var contentContainer: some View {
-        if self.whatsNew.releaseNotes != nil {
-            ScrollView {
-                self.contentView
-                    .padding(24)
-                    .frame(maxWidth: .infinity, alignment: .topLeading)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        } else {
+        // Both the GitHub release notes and the built-in highlights scroll, so a long
+        // list never runs under the footer buttons.
+        ScrollView {
             self.contentView
                 .padding(24)
-                .frame(
-                    maxWidth: .infinity,
-                    minHeight: Self.Layout.contentMinHeight,
-                    maxHeight: .infinity,
-                    alignment: .topLeading
-                )
+                .frame(maxWidth: .infinity, alignment: .topLeading)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     @ViewBuilder

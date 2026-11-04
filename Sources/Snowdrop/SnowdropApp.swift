@@ -204,6 +204,18 @@ struct SnowdropApp: App {
                 else { return false }
                 youtubePlayer.toggleFullView()
                 return true
+            },
+            handleVideoKey: { [weak youtubePlayer, weak arbiter] key in
+                guard let youtubePlayer, arbiter?.routesMediaKeysToVideo == true,
+                      youtubePlayer.currentVideo != nil
+                else { return false }
+                switch key {
+                case .back10: youtubePlayer.seekBackward(by: 10)
+                case .forward10: youtubePlayer.seekForward(by: 10)
+                case .playPause: youtubePlayer.playPause()
+                case .captions: Task { await youtubePlayer.toggleCaptions() }
+                }
+                return true
             }
         ))
         _sharedClient = State(initialValue: client)
@@ -296,6 +308,7 @@ struct SnowdropApp: App {
                 .onAppear {
                     DiagnosticsLogger.app.info("SnowdropApp: App content appeared")
                     self.textInputFocusState.startMonitoring()
+                    self.updaterService.startAutomaticChecks()
                     self.playbackKeyMonitor.start()
                     // Wire up PlayerService to AppDelegate for dock menu and AppleScript actions
                     // This runs synchronously so AppleScript commands can access playerService immediately

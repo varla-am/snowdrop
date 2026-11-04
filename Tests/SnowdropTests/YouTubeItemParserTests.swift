@@ -149,6 +149,52 @@ struct YouTubeItemParserTests {
         #expect(video.thumbnailURL?.absoluteString == "https://example.com/thumb.jpg")
     }
 
+    @Test("Reads the channel avatar from a lockup's decoratedAvatarViewModel")
+    func parsesLockupChannelAvatar() throws {
+        let lockup: [String: Any] = [
+            "contentId": "av1",
+            "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+            "metadata": [
+                "lockupMetadataViewModel": [
+                    "title": ["content": "With Avatar"],
+                    "image": [
+                        "decoratedAvatarViewModel": [
+                            "avatar": [
+                                "avatarViewModel": [
+                                    "image": [
+                                        "sources": [
+                                            ["url": "https://example.com/small.jpg", "width": 48, "height": 48],
+                                            ["url": "//example.com/large.jpg", "width": 88, "height": 88],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]
+
+        let video = try #require(YouTubeItemParser.video(fromLockup: lockup))
+        #expect(video.channelAvatarURL?.absoluteString == "https://example.com/large.jpg")
+    }
+
+    @Test("Reads the channel avatar from a legacy videoRenderer")
+    func parsesRendererChannelAvatar() throws {
+        let renderer: [String: Any] = [
+            "videoId": "av2",
+            "title": ["runs": [["text": "Legacy"]]],
+            "channelThumbnailSupportedRenderers": [
+                "channelThumbnailWithLinkRenderer": [
+                    "thumbnail": ["thumbnails": [["url": "https://example.com/legacy.jpg", "width": 68, "height": 68]]],
+                ],
+            ],
+        ]
+
+        let video = try #require(YouTubeItemParser.video(fromVideoRenderer: renderer))
+        #expect(video.channelAvatarURL?.absoluteString == "https://example.com/legacy.jpg")
+    }
+
     @Test("Video parser rejects playlist lockups and vice versa")
     func lockupContentTypeMismatch() {
         let playlistLockup: [String: Any] = [

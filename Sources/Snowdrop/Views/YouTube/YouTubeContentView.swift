@@ -13,6 +13,9 @@ struct YouTubeContentView: View {
     @Environment(AuthService.self) private var authService
     @Environment(YouTubePlayerService.self) private var youtubePlayer
 
+    /// Set while a sidebar change empties the stack, so that pop is not mistaken for the Back button.
+    @State private var isResettingForSectionChange = false
+
     var body: some View {
         Group {
             if let selection {
@@ -53,6 +56,7 @@ struct YouTubeContentView: View {
             self.handleSkipNavigationRequest(request)
         }
         .onChange(of: self.selection) { _, newSelection in
+            if !self.store.navigationPath.isEmpty { self.isResettingForSectionChange = true }
             self.store.navigationPath = NavigationPath()
             // Returning to Home via the sidebar is one way back after watching
             // (watch from any section, then pick Home). The path is already — or
@@ -72,6 +76,9 @@ struct YouTubeContentView: View {
         // `watchActivityGeneration` against its own watermark, so incidental
         // returns (no new activity) don't re-fetch.
         .onChange(of: self.store.navigationPath.count) { oldDepth, newDepth in
+            self.handleBackNavigation(oldDepth: oldDepth, newDepth: newDepth)
+        }
+        .onChange(of: self.store.navigationPath.count) { oldDepth, newDepth in
             guard self.selection == .home, newDepth == 0, oldDepth > 0 else { return }
             self.store.home.refreshContinueWatching(forGeneration: self.youtubePlayer.watchActivityGeneration)
         }
@@ -88,6 +95,26 @@ struct YouTubeContentView: View {
         .onChange(of: self.youtubePlayer.watchConclusionGeneration) { _, _ in
             guard self.selection == .home, self.store.navigationPath.isEmpty else { return }
             self.store.home.refreshContinueWatching(forGeneration: self.youtubePlayer.watchActivityGeneration)
+        }
+    }
+
+    /// Back from a playing video's page closes the video and shows the list again, instead of
+    /// leaving it playing in a floating window (which is for leaving by other routes, such as the sidebar).
+    /// The watch view hands the video to the floating window as it disappears, in either order
+    /// relative to this callback, so look a moment later.
+    private func handleBackNavigation(oldDepth: Int, newDepth: Int) {
+        guard newDepth < oldDepth else { return }
+        if self.isResettingForSectionChange {
+            self.isResettingForSectionChange = false
+            return
+        }
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(150))
+            guard let date = self.youtubePlayer.lastNavigateAwayPopOutDate,
+                  Date().timeIntervalSince(date) < 1,
+                  self.youtubePlayer.surfaceLocation == .floating
+            else { return }
+            self.youtubePlayer.stop()
         }
     }
 

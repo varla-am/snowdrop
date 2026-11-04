@@ -149,6 +149,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         let application = NSApplication.shared
+        // Hidden with Cmd+H: unhiding is the system's job, not ours.
+        guard !application.isHidden else { return }
         guard AppActivationWindowPolicy.shouldRevealMainWindow(
             keyWindowIdentifier: application.keyWindow?.identifier?.rawValue,
             mainWindowIdentifier: application.mainWindow?.identifier?.rawValue

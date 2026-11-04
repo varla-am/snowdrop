@@ -6,36 +6,36 @@ import Foundation
 enum WhatsNewProvider {
     /// GitHub repo for fetching release notes.
     private static let owner = "varla-am"
-    private static let repo = "snowdrop"
+    private static let repo = "kaset-snowdrop"
 
     /// Static fallback entries used when the network is unavailable.
     static let fallbackCollection: [WhatsNew] = [
         WhatsNew(
-            version: "1.1.1",
-            title: "What's New in Snowdrop 1.1.1",
+            version: "1.2.0",
+            title: "What's New in Snowdrop 1.2",
             features: [
+                .init(
+                    icon: "keyboard",
+                    title: "YouTube Keys",
+                    subtitle: "K pauses, J and L jump 10 seconds, C toggles subtitles, F goes fullscreen"
+                ),
+                .init(
+                    icon: "person.crop.circle",
+                    title: "Channel Avatars",
+                    subtitle: "Video cards show the channel picture instead of a letter"
+                ),
                 .init(
                     icon: "arrow.up.left.and.arrow.down.right",
                     title: "One Fullscreen",
-                    subtitle: "YouTube videos use a single fullscreen: double click, F or the player bar button"
-                ),
-                .init(
-                    icon: "keyboard",
-                    title: "Reliable Keys",
-                    subtitle: "Space and F work the same everywhere in the player"
-                ),
-                .init(
-                    icon: "sidebar.right",
-                    title: "Panels Below the Top Bar",
-                    subtitle: "Queue and lyrics no longer cover your avatar"
+                    subtitle: "Double click, F or the player bar button open the same video window"
                 ),
                 .init(
                     icon: "sparkles",
                     title: "Polish",
-                    subtitle: "Handles show with @, a backing under the player bar, release notes from the right repository"
+                    subtitle: "Queue and lyrics sit below the top bar, handles show with @, release notes come from the Snowdrop repository"
                 ),
             ],
-            learnMoreURL: URL(string: "https://github.com/varla-am/snowdrop/releases")
+            learnMoreURL: URL(string: "https://github.com/varla-am/kaset-snowdrop/releases")
         ),
         WhatsNew(
             version: "1.0.0",
@@ -62,7 +62,7 @@ enum WhatsNewProvider {
                     subtitle: "Browse public music and videos without signing in"
                 ),
             ],
-            learnMoreURL: URL(string: "https://github.com/varla-am/snowdrop/releases")
+            learnMoreURL: URL(string: "https://github.com/varla-am/kaset-snowdrop/releases")
         ),
     ]
 

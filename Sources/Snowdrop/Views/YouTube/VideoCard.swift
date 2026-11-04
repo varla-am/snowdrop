@@ -8,15 +8,15 @@ struct VideoCard: View {
     let video: YouTubeVideo
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            VideoThumbnailView(video: self.video, cornerRadius: 14)
+        VStack(alignment: .leading, spacing: 12) {
+            VideoThumbnailView(video: self.video, cornerRadius: 12)
 
-            HStack(alignment: .top, spacing: 10) {
+            HStack(alignment: .top, spacing: 12) {
                 ChannelMonogram(name: self.video.channelName, avatarURL: self.video.channelAvatarURL)
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(self.video.title)
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(.primary)
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
@@ -44,7 +44,7 @@ struct VideoCard: View {
 
     private var metaText: String? {
         let parts = [self.video.viewCountText, self.video.publishedText].compactMap(\.self)
-        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+        return parts.isEmpty ? nil : parts.joined(separator: " • ")
     }
 
     private var accessibilityText: String {

@@ -36,8 +36,8 @@
 <h3 align="center"><b>✏️ Building</b></h3>
 
 ```zsh
-git clone https://github.com/varla-am/snowdrop
-cd snowdrop
+git clone https://github.com/varla-am/kaset-snowdrop
+cd kaset-snowdrop
 xcodebuild -project Snowdrop.xcodeproj -scheme Snowdrop -configuration Release build
 ```
 

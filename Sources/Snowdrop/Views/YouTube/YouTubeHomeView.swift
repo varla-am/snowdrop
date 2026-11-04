@@ -9,9 +9,7 @@ struct YouTubeHomeView: View {
     /// The shelf chip showing in the grid; `nil` is the main feed.
     @State private var selectedChipID: String?
 
-    private static let columns = [
-        GridItem(.adaptive(minimum: 270, maximum: 420), spacing: 18, alignment: .top),
-    ]
+    private static let columns = YouTubeGridLayout.columns
 
     var body: some View {
         Group {
@@ -157,7 +155,7 @@ struct YouTubeHomeView: View {
     }
 
     private var videoGrid: some View {
-        LazyVGrid(columns: Self.columns, spacing: 28) {
+        LazyVGrid(columns: Self.columns, spacing: YouTubeGridLayout.rowSpacing) {
             ForEach(self.displayedVideos) { video in
                 NavigationLink(value: YouTubeRoute.watch(video)) {
                     VideoCard(video: video)

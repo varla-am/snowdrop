@@ -220,6 +220,10 @@ final class YouTubePlayerService {
     /// floating window.
     private(set) var surfaceLocation: SurfaceLocation = .none
 
+    /// When the last watch view handed its playing video to the floating window by being left.
+    /// The Back button reads it to tell "went back" apart from other ways of leaving the page.
+    private(set) var lastNavigateAwayPopOutDate: Date?
+
     /// The videoId of the WatchView that currently owns the inline surface.
     var activeInlineVideoId: String?
 
@@ -1205,6 +1209,7 @@ extension YouTubePlayerService {
         }
 
         if self.isPlaying, self.shouldPopOutOnNavigateAway() {
+            self.lastNavigateAwayPopOutDate = Date()
             self.popOutToWindow()
         } else {
             // Playing with pop-out disabled, or paused: stop instead of

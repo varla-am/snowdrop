@@ -13,6 +13,8 @@ struct YouTubeShortsView: View {
 
     /// The short currently snapped into view (drives autoplay).
     @State private var currentShortId: String?
+    /// Playback start for the short that just snapped into view; cancelled when the pager moves on.
+    @State private var playTask: Task<Void, Never>?
 
     var body: some View {
         Group {
@@ -91,7 +93,7 @@ struct YouTubeShortsView: View {
         .background(.black)
         .onChange(of: self.currentShortId) { _, shortId in
             guard let shortId else { return }
-            self.play(shortId: shortId)
+            self.schedulePlay(shortId: shortId)
         }
         .accessibilityIdentifier(AccessibilityID.YouTubeContent.shortsPager)
     }
@@ -150,6 +152,29 @@ struct YouTubeShortsView: View {
     private func isPresenting(_ short: YouTubeVideo) -> Bool {
         self.youtubePlayer.currentVideo?.videoId == short.videoId
             && self.youtubePlayer.surfaceLocation == .inline
+    }
+
+    /// Every short is a full YouTube page load, so wait until the pager has settled before starting
+    /// one; flicking through several shorts then costs one load instead of one per page.
+    private func schedulePlay(shortId: String) {
+        self.playTask?.cancel()
+        self.prefetchThumbnails(after: shortId)
+        self.playTask = Task {
+            try? await Task.sleep(for: .milliseconds(250))
+            guard !Task.isCancelled else { return }
+            self.play(shortId: shortId)
+        }
+    }
+
+    /// Decodes the next few thumbnails ahead of the scroll.
+    private func prefetchThumbnails(after shortId: String) {
+        let shorts = self.viewModel.shorts
+        guard let index = shorts.firstIndex(where: { $0.videoId == shortId }) else { return }
+        let urls = shorts.dropFirst(index + 1).prefix(3).compactMap(\.thumbnailURL)
+        guard !urls.isEmpty else { return }
+        Task {
+            await ImageCache.shared.prefetch(urls: Array(urls), targetSize: CGSize(width: 540, height: 960))
+        }
     }
 
     private func play(shortId: String) {

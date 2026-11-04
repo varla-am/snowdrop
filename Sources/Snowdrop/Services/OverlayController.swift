@@ -128,7 +128,8 @@ final class OverlayController {
             forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main
         ) { [weak self] _ in
             MainActor.assumeIsolated {
-                guard let self, self.isVisible else { return }
+                // A hidden app (Cmd+H) must stay hidden: ordering a window front would unhide it.
+                guard let self, self.isVisible, !NSApp.isHidden else { return }
                 self.panel?.orderFrontRegardless()
             }
         })
@@ -168,16 +169,19 @@ final class OverlayController {
     private func revealedFrame(for edge: DockEdge, in panel: NSPanel) -> NSRect {
         let vis = self.visibleFrame(for: panel)
         var frame = panel.frame
+        frame.size = Self.size
         frame.origin.y = min(max(frame.origin.y, vis.minY + self.margin), vis.maxY - frame.height - self.margin)
         frame.origin.x = edge == .left ? vis.minX + self.margin : vis.maxX - frame.width - self.margin
         return frame
     }
 
-    /// Only `tab` points stay on screen.
+    /// Tucked: the window shrinks to the `tab` sliver at the wall. Sliding a full-width
+    /// window off the screen would show the rest of it on a neighbouring display.
     private func hiddenFrame(for edge: DockEdge, in panel: NSPanel) -> NSRect {
         let vis = self.visibleFrame(for: panel)
         var frame = self.revealedFrame(for: edge, in: panel)
-        frame.origin.x = edge == .left ? vis.minX - frame.width + self.tab : vis.maxX - self.tab
+        frame.size.width = self.tab
+        frame.origin.x = edge == .left ? vis.minX : vis.maxX - self.tab
         return frame
     }
 
@@ -275,6 +279,14 @@ struct OverlayView: View {
     }
 
     var body: some View {
+        if let edge = OverlayController.shared.dockEdge {
+            self.dockedTab(edge)
+        } else {
+            self.pill
+        }
+    }
+
+    private var pill: some View {
         HStack(spacing: 12) {
             self.cover
             VStack(alignment: .leading, spacing: 2) {
@@ -302,33 +314,29 @@ struct OverlayView: View {
             .opacity(self.isHovering ? 1 : 0)
             .offset(x: 4, y: -4)
         }
-        .overlay { self.dockedTab }
         .onHover { self.isHovering = $0 }
         .animation(.easeInOut(duration: 0.15), value: self.isHovering)
     }
 
     /// What peeks out of the wall: a frosted sliver with an arrow pointing back into the screen.
-    @ViewBuilder
-    private var dockedTab: some View {
-        let controller = OverlayController.shared
-        if let edge = controller.dockEdge {
-            // On the left wall the visible sliver is the pill's right end, and the other way round.
-            HStack(spacing: 0) {
-                if edge == .left { Spacer(minLength: 0) }
-                ZStack {
-                    RoundedRectangle(cornerRadius: 28, style: .continuous).fill(.ultraThinMaterial)
-                    Image(systemName: edge == .left ? "chevron.compact.right" : "chevron.compact.left")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: edge == .left ? .trailing : .leading)
-                        .padding(.horizontal, 5)
-                }
-                .frame(width: 340)
-                if edge == .right { Spacer(minLength: 0) }
-            }
+    /// The window is only as wide as the sliver, so the pill's rounded end is drawn wider than the
+    /// window and cut off at the wall.
+    private func dockedTab(_ edge: DockEdge) -> some View {
+        // Round only the end that faces the screen; the other end meets the wall.
+        let shape = UnevenRoundedRectangle(
+            topLeadingRadius: edge == .right ? 20 : 0,
+            bottomLeadingRadius: edge == .right ? 20 : 0,
+            bottomTrailingRadius: edge == .left ? 20 : 0,
+            topTrailingRadius: edge == .left ? 20 : 0,
+            style: .continuous
+        )
+        return Image(systemName: edge == .left ? "chevron.compact.right" : "chevron.compact.left")
+            .font(.system(size: 16, weight: .semibold))
+            .foregroundStyle(.primary.opacity(0.7))
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .compatGlass(in: shape)
             .contentShape(.rect)
-            .onTapGesture { controller.reveal() }
-        }
+            .onTapGesture { OverlayController.shared.reveal() }
     }
 
     private func cornerButton(_ symbol: String, action: @escaping () -> Void) -> some View {

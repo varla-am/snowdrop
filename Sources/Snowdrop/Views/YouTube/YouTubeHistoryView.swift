@@ -40,13 +40,11 @@ struct YouTubeHistoryView: View {
         }
     }
 
-    private static let columns = [
-        GridItem(.adaptive(minimum: 210, maximum: 320), spacing: 16),
-    ]
+    private static let columns = YouTubeGridLayout.columns
 
     private var historyList: some View {
         ScrollView {
-            LazyVGrid(columns: Self.columns, spacing: 20) {
+            LazyVGrid(columns: Self.columns, spacing: YouTubeGridLayout.rowSpacing) {
                 ForEach(self.viewModel.videos) { video in
                     NavigationLink(value: YouTubeRoute.watch(video)) {
                         VideoCard(video: video)

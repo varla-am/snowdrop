@@ -144,12 +144,24 @@ struct GeneralSettingsView: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
+                        if let status = self.updateStatusText {
+                            Text(status)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                     Spacer()
-                    Button(String(localized: "Check Now")) {
-                        self.updaterService.checkForUpdates()
+                    if case .available = self.updaterService.state {
+                        Button(String(localized: "Install and Restart")) {
+                            self.updaterService.installAvailableUpdate()
+                        }
+                        .buttonStyle(.borderedProminent)
+                    } else {
+                        Button(String(localized: "Check Now")) {
+                            self.updaterService.checkForUpdates()
+                        }
+                        .disabled(!self.updaterService.canCheckForUpdates)
                     }
-                    .disabled(!self.updaterService.canCheckForUpdates)
                 }
                 .padding(.vertical, 4)
             } header: {
@@ -166,7 +178,7 @@ struct GeneralSettingsView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                Link(destination: URL(string: "https://github.com/varla-am/snowdrop")!) {
+                Link(destination: URL(string: "https://github.com/varla-am/kaset-snowdrop")!) {
                     HStack {
                         Text(String(localized: "GitHub"))
                         Spacer()
@@ -206,6 +218,19 @@ struct GeneralSettingsView: View {
 
     private var accountStatusText: String {
         self.authService.state.isLoggedIn ? String(localized: "Signed in to YouTube") : String(localized: "Not signed in")
+    }
+
+    /// One line under "Last checked" for the updater's current state.
+    private var updateStatusText: String? {
+        switch self.updaterService.state {
+        case .idle: nil
+        case .checking: String(localized: "Checking…")
+        case .upToDate: String(localized: "Snowdrop is up to date")
+        case let .available(info): String(localized: "Version \(info.version) is available")
+        case .downloading: String(localized: "Downloading…")
+        case .installing: String(localized: "Installing…")
+        case let .failed(message): message
+        }
     }
 
     private var appVersion: String {
