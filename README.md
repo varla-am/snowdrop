@@ -6,7 +6,8 @@
 <h2 align="center">A minimalistic custom YouTube Music and YouTube client for macOS</h2>
 
 > [!CAUTION]
-> This is an unofficial YouTube Music and YouTube client! Google doesn't support it.
+> This is an unofficial YouTube Music and YouTube client! Google does not support it.\
+> **_YouTube and YouTube Music are trademarks of Google LLC. Snowdrop is not affiliated with, endorsed by or sponsored by Google._**
 
 > [!NOTE]
 > This project is forked from sozercan/kaset
