@@ -29,7 +29,7 @@
 
 <h3 align="center"><b>🔧 Installation</b></h3>
 
-- Download `Snowdrop-v1.2.1.dmg` from the latest release
+- Download `Snowdrop-v1.3.dmg` from the latest release
 - Open the `.dmg` file
 - Drag Snowdrop to Applications
 - Gatekeeper will block the app from launching because it's not notarized, bypass it by clicking _Right Click -> Open_ or _System Settings -> Privacy & Security -> Open Anyway_
