@@ -78,12 +78,13 @@ final class YouTubeWatchWebView {
         self.logger.info("Creating YouTube watch WebView")
         self.usesCookieFreeDataStore = usesCookieFreeDataStore
 
-        self.coordinator = Coordinator(playerService: playerService)
+        let coordinator = Coordinator(playerService: playerService)
+        self.coordinator = coordinator
 
         let configuration = webKitManager.createWebViewConfiguration(
             websiteDataStore: usesCookieFreeDataStore ? .nonPersistent() : nil
         )
-        configuration.userContentController.add(self.coordinator!, name: "youtubePlayer")
+        configuration.userContentController.add(coordinator, name: "youtubePlayer")
         self.installUserScripts(
             on: configuration.userContentController,
             targetVolume: playerService.volume,
@@ -99,7 +100,8 @@ final class YouTubeWatchWebView {
             guard let playerService, playerService.currentVideo?.isShort != true else { return }
             playerService.toggleFullView()
         }
-        newWebView.navigationDelegate = self.coordinator
+        newWebView.navigationDelegate = coordinator
+        newWebView.uiDelegate = PlaybackWebViewUIDelegate.shared
         newWebView.customUserAgent = WebKitManager.userAgent
         self.webKitManager = webKitManager
         webKitManager.registerExtensionHostWebView(newWebView, role: .youtubeWatch)
@@ -330,12 +332,28 @@ final class YouTubeWatchWebView {
             forName: "youtubePlayer"
         )
         webView.navigationDelegate = nil
+        webView.uiDelegate = nil
         webView.removeFromSuperview()
         self.webKitManager?.unregisterExtensionHostWebView(role: .youtubeWatch)
         self.webView = nil
         self.coordinator = nil
         self.currentContainer = nil
         self.usesCookieFreeDataStore = nil
+    }
+
+    /// A host container is leaving the view hierarchy. Detach the surface if it
+    /// still lives there so it never sits inside a dead, windowless container:
+    /// the next host (inline watch view, floating window, Shorts page) claims
+    /// it through `ensureInHierarchy` as before.
+    func hostContainerWillDisappear(_ container: NSView) {
+        guard let webView, webView.superview === container else {
+            if self.currentContainer === container {
+                self.currentContainer = nil
+            }
+            return
+        }
+        webView.removeFromSuperview()
+        self.currentContainer = nil
     }
 }
 
@@ -856,6 +874,13 @@ extension YouTubeWatchWebView {
             forMainFrameOnly: true
         )
         contentController.addUserScript(blackout)
+
+        let spaceGuard = WKUserScript(
+            source: Self.spaceKeyGuardScript,
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: true
+        )
+        contentController.addUserScript(spaceGuard)
 
         let observer = WKUserScript(
             source: Self.observerScript,

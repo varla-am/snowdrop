@@ -225,129 +225,6 @@ enum WebPlaybackTransitionFallbackPolicy {
     }
 }
 
-// MARK: - MiniPlayerWebView
-
-/// A visible WebView that displays the YouTube Music player.
-/// This is required because YouTube Music won't initialize the video player
-/// without user interaction - autoplay is blocked in hidden WebViews.
-/// Uses SingletonPlayerWebView for the actual WebView instance.
-struct MiniPlayerWebView: NSViewRepresentable {
-    @Environment(WebKitManager.self) private var webKitManager
-    @Environment(PlayerService.self) private var playerService
-    @Environment(AuthService.self) private var authService
-
-    /// The video ID to play.
-    let videoId: String
-
-    /// Callback for player state changes.
-    var onStateChange: ((PlayerState) -> Void)?
-
-    /// Callback for metadata updates (title, artist, duration).
-    var onMetadataChange: ((String, String, Double) -> Void)?
-
-    enum PlayerState {
-        case loading
-        case playing
-        case paused
-        case ended
-        case error(String)
-    }
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(onStateChange: self.onStateChange, onMetadataChange: self.onMetadataChange)
-    }
-
-    func makeNSView(context: Context) -> NSView {
-        let container = NSView(frame: .zero)
-        container.wantsLayer = true
-
-        // Get or create the singleton WebView
-        let webView = SingletonPlayerWebView.shared.getWebView(
-            webKitManager: self.webKitManager,
-            playerService: self.playerService,
-            usesCookieFreeDataStore: self.authService.shouldUseCookieFreePlaybackDataStore
-        )
-
-        // Remove existing handler if present to avoid duplicates, then add fresh one
-        // This handles the case where makeNSView is called multiple times
-        let contentController = webView.configuration.userContentController
-        contentController.removeScriptMessageHandler(forName: "miniPlayer")
-        contentController.add(context.coordinator, name: "miniPlayer")
-
-        // Ensure WebView is in this container
-        SingletonPlayerWebView.shared.ensureInHierarchy(container: container)
-
-        // Load the video if needed
-        SingletonPlayerWebView.shared.loadVideo(videoId: self.videoId)
-
-        return container
-    }
-
-    func updateNSView(_ container: NSView, context _: Context) {
-        // Update WebView frame if needed
-        SingletonPlayerWebView.shared.ensureInHierarchy(container: container)
-    }
-
-    static func dismantleNSView(_: NSView, coordinator _: Coordinator) {
-        // WebView is managed by SingletonPlayerWebView.shared - it persists
-        // Remove the message handler to avoid duplicate handlers
-        SingletonPlayerWebView.shared.webView?.configuration.userContentController
-            .removeScriptMessageHandler(forName: "miniPlayer")
-    }
-
-    // MARK: - Coordinator
-
-    class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
-        var onStateChange: ((PlayerState) -> Void)?
-        var onMetadataChange: ((String, String, Double) -> Void)?
-
-        init(
-            onStateChange: ((PlayerState) -> Void)?,
-            onMetadataChange: ((String, String, Double) -> Void)?
-        ) {
-            self.onStateChange = onStateChange
-            self.onMetadataChange = onMetadataChange
-        }
-
-        func webView(_: WKWebView, didFinish _: WKNavigation!) {
-            // Page loaded
-        }
-
-        func webView(_: WKWebView, didFail _: WKNavigation!, withError error: Error) {
-            self.onStateChange?(.error(error.localizedDescription))
-        }
-
-        func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
-            // WebView content process crashed - attempt recovery by reloading
-            DiagnosticsLogger.player.error("MiniPlayer WebView content process terminated, attempting reload")
-            self.onStateChange?(.error("Player crashed, reloading..."))
-            webView.reload()
-        }
-
-        func userContentController(
-            _: WKUserContentController,
-            didReceive message: WKScriptMessage
-        ) {
-            guard let body = message.body as? [String: Any],
-                  let type = body["type"] as? String
-            else { return }
-
-            if type == "STATE_UPDATE" {
-                let title = body["title"] as? String ?? ""
-                let artist = body["artist"] as? String ?? ""
-                let duration = body["duration"] as? Double ?? 0
-                let isPlaying = body["isPlaying"] as? Bool ?? false
-
-                if !title.isEmpty {
-                    self.onMetadataChange?(title, artist, duration)
-                }
-
-                self.onStateChange?(isPlaying ? .playing : .paused)
-            }
-        }
-    }
-}
-
 // MARK: - SingletonPlayerWebView
 
 /// Manages a single WebView instance for the entire app lifetime.
@@ -660,6 +537,7 @@ final class SingletonPlayerWebView {
 
         let newWebView = WKWebView(frame: .zero, configuration: configuration)
         newWebView.navigationDelegate = self.coordinator
+        newWebView.uiDelegate = PlaybackWebViewUIDelegate.shared
         newWebView.customUserAgent = WebKitManager.userAgent
         self.webKitManager = webKitManager
         webKitManager.registerExtensionHostWebView(newWebView, role: .musicPlayer)
@@ -786,6 +664,7 @@ final class SingletonPlayerWebView {
             forName: "singletonPlayer"
         )
         webView.navigationDelegate = nil
+        webView.uiDelegate = nil
         webView.removeFromSuperview()
         self.webKitManager?.unregisterExtensionHostWebView(role: .musicPlayer)
         self.webView = nil
@@ -1557,7 +1436,14 @@ extension SingletonPlayerWebView {
         navigationAction: WKNavigationAction,
         decisionHandler: @escaping @MainActor (WKNavigationActionPolicy) -> Void
     ) {
-        guard navigationAction.targetFrame?.isMainFrame == true else {
+        guard let targetFrame = navigationAction.targetFrame else {
+            // A popup (`window.open`, `target="_blank"`) has nowhere to go: the
+            // playback WebView has no UI delegate that creates windows, so drop
+            // it explicitly instead of admitting an untracked navigation.
+            decisionHandler(.cancel)
+            return
+        }
+        guard targetFrame.isMainFrame else {
             decisionHandler(.allow)
             return
         }

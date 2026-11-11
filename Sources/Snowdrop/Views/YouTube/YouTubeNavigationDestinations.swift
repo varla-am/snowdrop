@@ -22,7 +22,13 @@ extension View {
             case let .watch(video):
                 // Attaches its own bar so it can hand the controls to the
                 // docked video (Settings → YouTube → Show Controls on Video).
+                //
+                // Keyed by video: a skip/autoplay swaps the top route in place (the
+                // stack depth stays the same), and without a new identity SwiftUI
+                // would reuse the old page, keeping its `@State` view model, so the
+                // title and related list stayed on the previous video.
                 YouTubeWatchView(video: video, client: client)
+                    .id(video.videoId)
             case let .channel(channelId):
                 YouTubeChannelView(channelId: channelId, client: client)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)

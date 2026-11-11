@@ -167,8 +167,53 @@ struct YouTubePlayerServiceTests {
         // assertions don't depend on the global SettingsManager.shared state.
         self.sut = YouTubePlayerService(
             playbackController: self.controller,
-            shouldPopOutOnNavigateAway: { true }
+            shouldPopOutOnNavigateAway: { true },
+            // The existing end-of-video tests exercise the deferred (manual) recovery
+            // path; natural-end autoplay has its own tests below.
+            shouldAutoplayNextOnEnd: { false }
         )
+    }
+
+    @Test("A natural finish continues with the first up-next video")
+    func naturalEndAutoplaysNextVideo() async {
+        let autoplaying = YouTubePlayerService(
+            playbackController: self.controller,
+            shouldPopOutOnNavigateAway: { true },
+            shouldAutoplayNextOnEnd: { true }
+        )
+        autoplaying.play(video: MockYouTubeClient.makeVideo(videoId: "a"))
+        autoplaying.setUpNext([MockYouTubeClient.makeVideo(videoId: "b")])
+
+        #expect(autoplaying.handleVideoEnded(videoId: "a"))
+        for _ in 0 ..< 10 where autoplaying.currentVideo?.videoId != "b" {
+            await Task.yield()
+        }
+
+        #expect(autoplaying.currentVideo?.videoId == "b")
+        #expect(self.controller.loadedVideoIds == ["a", "b"])
+    }
+
+    @Test("Autoplay does not fire when disabled or when the user already moved on")
+    func naturalEndAutoplayRespectsGateAndNewerSelection() async {
+        self.sut.play(video: MockYouTubeClient.makeVideo(videoId: "a"))
+        self.sut.setUpNext([MockYouTubeClient.makeVideo(videoId: "b")])
+        #expect(self.sut.handleVideoEnded(videoId: "a"))
+        await Task.yield()
+        #expect(self.sut.currentVideo?.videoId == "a")
+
+        let autoplaying = YouTubePlayerService(
+            playbackController: self.controller,
+            shouldPopOutOnNavigateAway: { true },
+            shouldAutoplayNextOnEnd: { true }
+        )
+        autoplaying.play(video: MockYouTubeClient.makeVideo(videoId: "a"))
+        autoplaying.setUpNext([MockYouTubeClient.makeVideo(videoId: "b")])
+        #expect(autoplaying.handleVideoEnded(videoId: "a"))
+        autoplaying.play(video: MockYouTubeClient.makeVideo(videoId: "c"))
+        for _ in 0 ..< 10 {
+            await Task.yield()
+        }
+        #expect(autoplaying.currentVideo?.videoId == "c")
     }
 
     @Test("Initial state is empty")

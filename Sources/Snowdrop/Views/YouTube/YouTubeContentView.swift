@@ -125,7 +125,13 @@ struct YouTubeContentView: View {
         defer {
             self.youtubePlayer.consumeSkipNavigationRequest()
         }
-        self.store.navigationPath.append(YouTubeRoute.watch(video))
+        // A skip happens on the docked watch page, so swap it instead of
+        // stacking another page that Back would have to unwind.
+        if self.youtubePlayer.activeInlineVideoId != nil {
+            self.store.replaceTopWatch(with: video)
+        } else {
+            self.store.navigationPath.append(YouTubeRoute.watch(video))
+        }
     }
 
     /// Docks a popped-out video back into a watch view: adopts the one that

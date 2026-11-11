@@ -34,6 +34,18 @@ final class YouTubeViewModelStore {
         self.playlists = YouTubePlaylistsViewModel(client: client)
     }
 
+    /// Opens `video` in place of the watch page on top of the stack.
+    ///
+    /// Related videos and skips used to push a new watch page each time, so
+    /// leaving after a few of them took one Back click per video. Replacing
+    /// keeps a single watch page between the list and the video.
+    func replaceTopWatch(with video: YouTubeVideo) {
+        if !self.navigationPath.isEmpty {
+            self.navigationPath.removeLast()
+        }
+        self.navigationPath.append(YouTubeRoute.watch(video))
+    }
+
     /// Resets account-scoped state after an account switch.
     func resetForAccountChange() {
         self.navigationPath = NavigationPath()

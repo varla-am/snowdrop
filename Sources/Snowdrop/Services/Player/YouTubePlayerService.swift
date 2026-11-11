@@ -326,15 +326,23 @@ final class YouTubePlayerService {
     /// without touching global `UserDefaults`.
     private let shouldPopOutOnNavigateAway: @MainActor () -> Bool
 
+    /// Whether a naturally finished video continues with the first up-next
+    /// candidate. The watch page's own autonav is switched off by the bridge
+    /// script (it would drift the page behind the service's back), so the
+    /// continuation is driven from here instead.
+    private let shouldAutoplayNextOnEnd: @MainActor () -> Bool
+
     init(
         webKitManager: WebKitManager = .shared,
         playbackController: (any YouTubeWatchPlaybackControlling)? = nil,
         shouldPopOutOnNavigateAway: @escaping @MainActor () -> Bool = { SettingsManager.shared.popOutVideoOnNavigateAway },
+        shouldAutoplayNextOnEnd: @escaping @MainActor () -> Bool = { true },
         playbackLoadingTimeout: Duration = .seconds(15)
     ) {
         self.webKitManager = webKitManager
         self.playbackController = playbackController ?? YouTubeWatchWebView.shared
         self.shouldPopOutOnNavigateAway = shouldPopOutOnNavigateAway
+        self.shouldAutoplayNextOnEnd = shouldAutoplayNextOnEnd
         self.playbackLoadingTimeout = playbackLoadingTimeout
     }
 
@@ -1721,7 +1729,19 @@ extension YouTubePlayerService {
             self.watchActivityGeneration += 1
             self.onVideoEnded?(videoId)
         }
+        if !isNativeTerminal, self.shouldAutoplayNextOnEnd(), let endedVideoId = self.currentVideo?.videoId {
+            self.continueAfterNaturalEnd(of: endedVideoId)
+        }
         return true
+    }
+
+    /// Starts the next video after a natural finish. Skipped when something else
+    /// became current in the meantime (user pick, window closed, another skip).
+    private func continueAfterNaturalEnd(of endedVideoId: String) {
+        Task { @MainActor [weak self] in
+            guard let self, self.currentVideo?.videoId == endedVideoId else { return }
+            await self.skipForward()
+        }
     }
 
     nonisolated static func isEndEventStale(

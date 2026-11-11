@@ -33,6 +33,10 @@ struct YouTubeWatchSurfaceView: NSViewRepresentable {
             selectedVideoId: self.youtubePlayer.currentVideo?.videoId
         )
     }
+
+    static func dismantleNSView(_ nsView: YouTubeWatchContainerView, coordinator _: ()) {
+        YouTubeWatchWebView.shared.hostContainerWillDisappear(nsView)
+    }
 }
 
 // MARK: - YouTubeWatchSurfaceAttachment

@@ -37,6 +37,13 @@ extension YouTubeWatchWebView {
                 self.handleStateUpdate(body, documentGeneration: messageDocumentGeneration)
             case "VIDEO_ENDED":
                 self.handleVideoEnded(body, documentGeneration: messageDocumentGeneration)
+            case "REMOTE_NEXT", "REMOTE_PREVIOUS":
+                // Media keys arrive as page actions while WebKit owns the Now Playing
+                // card; feed them through the same ingress as the system commands.
+                let direction: RemoteMusicCommandDirection = type == "REMOTE_NEXT" ? .forward : .backward
+                Task { @MainActor in
+                    NowPlayingManager.shared.handleAppIntentCommand(.nextPrevious(direction: direction))
+                }
             default:
                 return
             }
@@ -329,7 +336,15 @@ extension YouTubeWatchWebView {
         navigationAction: WKNavigationAction,
         decisionHandler: @escaping @MainActor (WKNavigationActionPolicy) -> Void
     ) {
-        guard navigationAction.targetFrame?.isMainFrame == true else {
+        guard let targetFrame = navigationAction.targetFrame else {
+            // A popup (`window.open`, `target="_blank"`) has nowhere to go: the
+            // playback WebView has no UI delegate that creates windows, and
+            // letting it through only lets the page spawn a navigation we never
+            // track. Drop it explicitly.
+            decisionHandler(.cancel)
+            return
+        }
+        guard targetFrame.isMainFrame else {
             decisionHandler(.allow)
             return
         }

@@ -21,9 +21,12 @@ struct YouTubeWatchScriptTests {
             marker: "bridge.postMessage({",
             terminator: "});"
         )
-        #expect(self.occurrenceCount(of: "postMessage(", in: script) == 2)
-        #expect(payloads.count == 2)
-        for payload in payloads {
+        // Two media-state payloads plus the shared media-key relay (`post(type)`).
+        #expect(self.occurrenceCount(of: "postMessage(", in: script) == 3)
+        #expect(payloads.count == 3)
+        let mediaPayloads = payloads.filter { !$0.contains("type: type") }
+        #expect(mediaPayloads.count == 2)
+        for payload in mediaPayloads {
             #expect(payload.contains("documentGeneration: window.__snowdropDocumentGeneration"))
             #expect(payload.contains("mediaGeneration:"))
         }
@@ -42,6 +45,17 @@ struct YouTubeWatchScriptTests {
         #expect(endedPayload?.contains(
             "pendingSeekAttempt: window.__snowdropPendingSeekAttempt"
         ) == true)
+    }
+
+    @Test("Observer owns the next/previous media-key actions and relays them to native")
+    func observerOwnsMediaKeyActions() {
+        let script = YouTubeWatchWebView.observerScript
+        #expect(script.contains("function installMediaKeyHandlers()"))
+        #expect(script.contains("ms.setActionHandler('nexttrack'"))
+        #expect(script.contains("ms.setActionHandler('previoustrack'"))
+        #expect(script.contains("post('REMOTE_NEXT')"))
+        #expect(script.contains("post('REMOTE_PREVIOUS')"))
+        #expect(script.contains("__snowdropInstallingMediaKeyHandlers"))
     }
 
     @Test("Observer rejects ended callbacks from stale video elements")

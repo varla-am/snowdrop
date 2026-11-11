@@ -405,9 +405,47 @@ extension YouTubeWatchWebView {
                 sendEnded(endedVideo);
             }
 
+            // F7/F9 (previous/next media keys) reach a WebKit-owned Now Playing
+            // session as `previoustrack`/`nexttrack` page actions. YouTube registers
+            // its own handlers only inside playlists, so outside one the keys did
+            // nothing. Own both actions and route them to Snowdrop, which applies
+            // the media-control style and skips/seeks the video. The wrapper keeps
+            // YouTube's later registrations from taking the actions back.
+            function installMediaKeyHandlers() {
+                try {
+                    const ms = navigator.mediaSession;
+                    if (!ms) { return; }
+                    if (!ms.__snowdropWatchSetActionHandlerWrapped) {
+                        const orig = ms.setActionHandler.bind(ms);
+                        ms.setActionHandler = function(type, handler) {
+                            if ((type === 'nexttrack' || type === 'previoustrack')
+                                && !window.__snowdropInstallingMediaKeyHandlers) {
+                                return undefined;
+                            }
+                            return orig(type, handler);
+                        };
+                        ms.__snowdropWatchSetActionHandlerWrapped = true;
+                    }
+                    const post = function(type) {
+                        bridge.postMessage({
+                            type: type,
+                            documentGeneration: window.__snowdropDocumentGeneration
+                        });
+                    };
+                    window.__snowdropInstallingMediaKeyHandlers = true;
+                    try {
+                        ms.setActionHandler('nexttrack', function() { post('REMOTE_NEXT'); });
+                        ms.setActionHandler('previoustrack', function() { post('REMOTE_PREVIOUS'); });
+                    } finally {
+                        window.__snowdropInstallingMediaKeyHandlers = false;
+                    }
+                } catch (e) {}
+            }
+
             function attach() {
                 refreshAdObserver();
                 disableAutonav();
+                installMediaKeyHandlers();
                 const video = videoEl();
                 if (!video) { return false; }
                 const videoId = currentVideoId();
@@ -522,6 +560,35 @@ extension YouTubeWatchWebView {
                 html *, body * { visibility: hidden !important; }
             `;
             document.documentElement.appendChild(style);
+        })();
+        """
+    }
+
+    /// Document-start guard: Space belongs to the native Playback menu shortcut,
+    /// so the page must not also act on it. Without this, YouTube's own handler
+    /// (or a focused play button, which clicks on keyup) toggles the video a
+    /// second time and an unpause bounces straight back to paused. Typing in
+    /// editable fields is left alone.
+    static var spaceKeyGuardScript: String {
+        """
+        (function() {
+            'use strict';
+            if (window.__snowdropSpaceGuard) { return; }
+            window.__snowdropSpaceGuard = true;
+            const isEditable = (el) => {
+                if (!el || !el.tagName) { return false; }
+                const tag = el.tagName.toUpperCase();
+                return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
+            };
+            const guard = (event) => {
+                if (event.code !== 'Space' && event.key !== ' ') { return; }
+                if (isEditable(event.target)) { return; }
+                event.preventDefault();
+                event.stopImmediatePropagation();
+            };
+            ['keydown', 'keypress', 'keyup'].forEach((type) => {
+                window.addEventListener(type, guard, true);
+            });
         })();
         """
     }

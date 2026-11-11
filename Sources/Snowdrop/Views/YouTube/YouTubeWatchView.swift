@@ -16,6 +16,7 @@ struct YouTubeWatchView: View {
     @Environment(AuthService.self) private var authService
     @Environment(AccountService.self) private var accountService
     @Environment(YouTubePlayerService.self) private var youtubePlayer
+    @Environment(YouTubeViewModelStore.self) private var youtubeStore
     @State private var viewModel: YouTubeWatchViewModel
 
     init(video: YouTubeVideo, client: any YouTubeClientProtocol) {
@@ -25,7 +26,6 @@ struct YouTubeWatchView: View {
         )
     }
 
-    @State private var commentDraft = ""
     @State private var settings = SettingsManager.shared
     @State private var isVideoControlsRegionOnScreen = true
 
@@ -93,7 +93,7 @@ struct YouTubeWatchView: View {
 
                         Divider()
 
-                        self.commentsSection
+                        YouTubeCommentsSection(viewModel: self.viewModel)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -459,7 +459,9 @@ struct YouTubeWatchView: View {
             case .loaded, .loadingMore:
                 LazyVStack(alignment: .leading, spacing: 10) {
                     ForEach(self.viewModel.data.related) { related in
-                        NavigationLink(value: YouTubeRoute.watch(related)) {
+                        Button {
+                            self.youtubeStore.replaceTopWatch(with: related)
+                        } label: {
                             RelatedVideoRow(video: related)
                         }
                         .buttonStyle(.interactiveRow)
@@ -470,6 +472,31 @@ struct YouTubeWatchView: View {
     }
 
     // MARK: - Comments
+
+    private var hasPersonalAccount: Bool {
+        self.authService.hasPersonalAccount
+    }
+
+}
+
+// MARK: - YouTubeCommentsSection
+
+/// Comments for one video: composer, threads and pagination. Shared by the
+/// watch page and the Shorts comments sheet so they behave identically.
+struct YouTubeCommentsSection: View {
+    let viewModel: YouTubeWatchViewModel
+
+    @Environment(AuthService.self) private var authService
+
+    @State private var commentDraft = ""
+
+    private var hasPersonalAccount: Bool {
+        self.authService.hasPersonalAccount
+    }
+
+    var body: some View {
+        self.commentsSection
+    }
 
     private var commentsSection: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -505,7 +532,7 @@ struct YouTubeWatchView: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 6)
-                        .background(Self.brandAccent, in: Capsule())
+                        .background(YouTubeWatchView.brandAccent, in: Capsule())
                         .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
@@ -548,7 +575,7 @@ struct YouTubeWatchView: View {
                 .foregroundStyle(self.hasCommentDraft ? AnyShapeStyle(.white) : AnyShapeStyle(.secondary))
                 .compatGlass(
                     interactive: true,
-                    tint: self.hasCommentDraft && self.viewModel.canComment ? Self.brandAccent : nil,
+                    tint: self.hasCommentDraft && self.viewModel.canComment ? YouTubeWatchView.brandAccent : nil,
                     in: Circle()
                 )
                 .contentShape(Circle())
@@ -565,9 +592,6 @@ struct YouTubeWatchView: View {
         }
     }
 
-    private var hasPersonalAccount: Bool {
-        self.authService.hasPersonalAccount
-    }
 
     /// Whether the composer holds postable text (drives the send accent).
     private var hasCommentDraft: Bool {

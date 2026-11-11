@@ -209,7 +209,10 @@ private struct ShortPage: View {
     let isActive: Bool
 
     @Environment(YouTubePlayerService.self) private var youtubePlayer
+    @Environment(YouTubeViewModelStore.self) private var youtubeStore
     @Environment(\.openURL) private var openURL
+
+    @State private var showsComments = false
 
     var body: some View {
         // The card is centred: an empty column on the left balances the actions on the right.
@@ -309,6 +312,9 @@ private struct ShortPage: View {
             ) {
                 Task { await self.youtubePlayer.toggleDislike() }
             }
+            self.actionButton("bubble.left", help: String(localized: "Comments")) {
+                self.showsComments = true
+            }
             if let url = self.shortURL {
                 ShareLink(item: url) {
                     self.actionIcon("square.and.arrow.up")
@@ -324,6 +330,9 @@ private struct ShortPage: View {
         .padding(.bottom, 8)
         .disabled(!self.isActive)
         .opacity(self.isActive ? 1 : 0.35)
+        .sheet(isPresented: self.$showsComments) {
+            ShortCommentsSheet(video: self.short, client: self.youtubeStore.client)
+        }
     }
 
     private var shortURL: URL? {
@@ -377,6 +386,51 @@ private struct ShortPage: View {
             )
         }
         .allowsHitTesting(false)
+    }
+}
+
+// MARK: - ShortCommentsSheet
+
+/// Comments for one short, in the same section the watch page uses.
+private struct ShortCommentsSheet: View {
+    let video: YouTubeVideo
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var viewModel: YouTubeWatchViewModel
+
+    init(video: YouTubeVideo, client: any YouTubeClientProtocol) {
+        self.video = video
+        self._viewModel = State(initialValue: YouTubeWatchViewModel(video: video, client: client))
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text(self.video.title)
+                    .font(.headline)
+                    .lineLimit(1)
+                Spacer(minLength: 12)
+                Button(String(localized: "Done")) {
+                    self.dismiss()
+                }
+                .keyboardShortcut(.cancelAction)
+            }
+            .padding(16)
+
+            Divider()
+
+            ScrollView {
+                YouTubeCommentsSection(viewModel: self.viewModel)
+                    .padding(16)
+            }
+        }
+        .frame(minWidth: 420, idealWidth: 480, minHeight: 480, idealHeight: 620)
+        .task {
+            await self.viewModel.load()
+        }
+        .onDisappear {
+            self.viewModel.cancel()
+        }
     }
 }
 
