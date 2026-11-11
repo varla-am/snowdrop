@@ -315,6 +315,8 @@ struct SnowdropApp: App {
                     self.appDelegate.playerService = self.playerService
                     // The floating player comes back if it was open when Snowdrop last quit.
                     OverlayController.shared.restore(playerService: self.playerService, youtubePlayer: self.youtubePlayerService)
+                    // So does the vinyl wallpaper.
+                    VinylWallpaperController.shared.restore(playerService: self.playerService)
                     // Drain any cold-launch URLs once `onReceive` below is subscribed.
                     self.appDelegate.beginOpenURLDelivery()
                     AppIntentsBridge.shared.setShowMainWindowHandler { self.showMainWindow() }
@@ -626,6 +628,10 @@ struct SnowdropApp: App {
                     OverlayController.shared.toggle(playerService: self.playerService, youtubePlayer: self.youtubePlayerService)
                 }
                 .keyboardShortcut("o", modifiers: [.command, .option])
+
+                Button(VinylWallpaperController.shared.isVisible ? "Hide Vinyl Wallpaper" : "Show Vinyl Wallpaper") {
+                    VinylWallpaperController.shared.toggle(playerService: self.playerService)
+                }
 
                 Divider()
 

@@ -16,6 +16,9 @@ final class SettingsManager {
         static let theme = "settings.theme"
         static let windowTransparency = "settings.windowTransparency"
         static let windowBlurEnabled = "settings.windowBlurEnabled"
+        static let vinylWallpaperTime = "settings.vinylWallpaperTime"
+        static let vinylNightStart = "settings.vinylNightStart"
+        static let vinylNightEnd = "settings.vinylNightEnd"
         static let showNowPlayingNotifications = "settings.showNowPlayingNotifications"
         static let defaultLaunchPage = "settings.defaultLaunchPage"
         static let hapticFeedbackEnabled = "settings.hapticFeedbackEnabled"
@@ -286,6 +289,32 @@ final class SettingsManager {
         didSet {
             UserDefaults.standard.set(self.windowBlurEnabled, forKey: Keys.windowBlurEnabled)
         }
+    }
+
+    /// Whether the vinyl wallpaper shows day, night, or follows the clock.
+    var vinylWallpaperTime: VinylWallpaperTime {
+        didSet {
+            UserDefaults.standard.set(self.vinylWallpaperTime.rawValue, forKey: Keys.vinylWallpaperTime)
+        }
+    }
+
+    /// When night falls on the vinyl wallpaper, in minutes since midnight.
+    var vinylNightStart: Int {
+        didSet {
+            UserDefaults.standard.set(self.vinylNightStart, forKey: Keys.vinylNightStart)
+        }
+    }
+
+    /// When morning comes back to the vinyl wallpaper, in minutes since midnight.
+    var vinylNightEnd: Int {
+        didSet {
+            UserDefaults.standard.set(self.vinylNightEnd, forKey: Keys.vinylNightEnd)
+        }
+    }
+
+    /// The day/night times as a schedule.
+    var vinylDaySchedule: VinylDaySchedule {
+        VinylDaySchedule(nightStart: self.vinylNightStart, nightEnd: self.vinylNightEnd)
     }
 
     /// Whether to show system notifications when the track changes.
@@ -647,6 +676,12 @@ final class SettingsManager {
         self.theme = UserDefaults.standard.string(forKey: Keys.theme).flatMap(SnowdropTheme.init(rawValue:)) ?? .snowdrop
         self.windowTransparency = min(max(UserDefaults.standard.object(forKey: Keys.windowTransparency) as? Double ?? 0.4, 0), 0.9)
         self.windowBlurEnabled = UserDefaults.standard.object(forKey: Keys.windowBlurEnabled) as? Bool ?? true
+        self.vinylWallpaperTime = (UserDefaults.standard.string(forKey: Keys.vinylWallpaperTime))
+            .flatMap(VinylWallpaperTime.init(rawValue:)) ?? .automatic
+        self.vinylNightStart = UserDefaults.standard.object(forKey: Keys.vinylNightStart) as? Int
+            ?? VinylDaySchedule.defaultNightStart
+        self.vinylNightEnd = UserDefaults.standard.object(forKey: Keys.vinylNightEnd) as? Int
+            ?? VinylDaySchedule.defaultNightEnd
 
         AppLocalization.setLanguage(self.contentLanguage.languageCode)
 

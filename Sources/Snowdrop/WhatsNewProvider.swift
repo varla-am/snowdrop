@@ -11,6 +11,28 @@ enum WhatsNewProvider {
     /// Static fallback entries used when the network is unavailable.
     static let fallbackCollection: [WhatsNew] = [
         WhatsNew(
+            version: "1.3",
+            title: "What's New in Snowdrop 1.3",
+            features: [
+                .init(
+                    icon: "opticaldisc",
+                    title: "Vinyl Desktop Wallpaper",
+                    subtitle: "A turntable on your desktop: your cover spins on the record, the tonearm swings in and out, and it keeps running with the window hidden"
+                ),
+                .init(
+                    icon: "moon.stars",
+                    title: "Day and Night",
+                    subtitle: "The desk fades from day into night on a schedule you set in Appearance, or you can pin it to day or night"
+                ),
+                .init(
+                    icon: "bolt.fill",
+                    title: "Light on Battery",
+                    subtitle: "Drawn live and only while something moves, so an idle wallpaper uses no GPU"
+                ),
+            ],
+            learnMoreURL: URL(string: "https://github.com/varla-am/kaset-snowdrop/releases")
+        ),
+        WhatsNew(
             version: "1.2.1",
             title: "What's New in Snowdrop 1.2.1",
             features: [

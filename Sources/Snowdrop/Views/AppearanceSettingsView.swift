@@ -38,8 +38,41 @@ struct AppearanceSettingsView: View {
 
                 Toggle(String(localized: "Blur what is behind the window"), isOn: self.$settings.windowBlurEnabled)
             }
+
+            Section(String(localized: "Vinyl wallpaper")) {
+                Picker(String(localized: "Time of day"), selection: self.$settings.vinylWallpaperTime) {
+                    Text(String(localized: "Automatic")).tag(VinylWallpaperTime.automatic)
+                    Text(String(localized: "Day")).tag(VinylWallpaperTime.day)
+                    Text(String(localized: "Night")).tag(VinylWallpaperTime.night)
+                }
+                if self.settings.vinylWallpaperTime == .automatic {
+                    DatePicker(
+                        String(localized: "Night starts"),
+                        selection: Self.timeBinding(self.$settings.vinylNightStart),
+                        displayedComponents: .hourAndMinute
+                    )
+                    DatePicker(
+                        String(localized: "Morning comes"),
+                        selection: Self.timeBinding(self.$settings.vinylNightEnd),
+                        displayedComponents: .hourAndMinute
+                    )
+                    Text(String(localized: "The desk fades from day into night at the first time, and back at the second."))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
         }
         .formStyle(.grouped)
+    }
+
+    /// Adapts minutes since midnight to the Date a time picker edits.
+    private static func timeBinding(_ minutes: Binding<Int>) -> Binding<Date> {
+        Binding(
+            get: {
+                Calendar.current.date(bySettingHour: minutes.wrappedValue / 60, minute: minutes.wrappedValue % 60, second: 0, of: Date()) ?? Date()
+            },
+            set: { minutes.wrappedValue = VinylDaySchedule.minutes(of: $0) }
+        )
     }
 }
 

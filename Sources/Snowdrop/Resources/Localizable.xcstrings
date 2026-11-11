@@ -22307,6 +22307,33 @@
     "Hide Floating Player" : {
 
     },
+    "Vinyl wallpaper" : {
+
+    },
+    "Time of day" : {
+
+    },
+    "Automatic" : {
+
+    },
+    "Day" : {
+
+    },
+    "Night" : {
+
+    },
+    "Night starts" : {
+
+    },
+    "Morning comes" : {
+
+    },
+    "The desk fades from day into night at the first time, and back at the second." : {
+
+    },
+    "Hide Vinyl Wallpaper" : {
+
+    },
     "Hide Lyrics" : {
       "localizations" : {
         "ar" : {
@@ -51841,6 +51868,9 @@
       }
     },
     "Show Floating Player" : {
+
+    },
+    "Show Vinyl Wallpaper" : {
 
     },
     "Show Large Artwork" : {
