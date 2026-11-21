@@ -132,7 +132,9 @@ extension PlaylistDetailView {
 
     @ViewBuilder
     private func libraryButton(_ detail: PlaylistDetail, showsTitles: Bool) -> some View {
-        if detail.supportsLibraryToggle, self.hasPersonalAccount {
+        // Your own playlists are already in your library: the toggle does nothing there
+        // and the request comes back HTTP 403, so it isn't offered.
+        if detail.supportsLibraryToggle, self.hasPersonalAccount, !detail.canDelete {
             let currentlyInLibrary = self.isInLibrary
             let libraryTitle = currentlyInLibrary
                 ? String(localized: "Added to Library")

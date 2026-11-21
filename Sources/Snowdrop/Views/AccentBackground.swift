@@ -31,7 +31,9 @@ struct AccentBackground: View {
         ZStack {
             // Base gradient from extracted colors
             LinearGradient(
-                colors: [self.palette.primary, self.palette.secondary, Color(nsColor: .windowBackgroundColor).opacity(0.95)],
+                // Translucent on purpose: the window backdrop (blur + glow) must show through
+                // instead of a near-black slab.
+                colors: [self.palette.primary.opacity(0.55), self.palette.secondary.opacity(0.3), Color.clear],
                 startPoint: .top,
                 endPoint: .bottom
             )

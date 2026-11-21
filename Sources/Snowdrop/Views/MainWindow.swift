@@ -592,6 +592,8 @@ struct MainWindow: View { // swiftlint:disable:this type_body_length
                             self.youtubeStore.navigationPath = NavigationPath()
                         }
                     )
+                    // Keep the rail above the page (and its video surface) for hit testing.
+                    .zIndex(1)
 
                     // A floating rounded panel beside the rail, not a hard-edged slab
                     // butted against it.
@@ -605,6 +607,15 @@ struct MainWindow: View { // swiftlint:disable:this type_body_length
             }
             .id(self.contentResetID)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // Account avatar pinned to the window's top-right corner.
+            // (Music already has its own avatar in the top bar, so only YouTube gets this one.)
+            .overlay(alignment: .topTrailing) {
+                if self.settings.appSource == .video {
+                    ToolbarAccountButton()
+                        .padding(.top, 12)
+                        .padding(.trailing, 18)
+                }
+            }
             .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
             .toolbar(removing: .title)
 

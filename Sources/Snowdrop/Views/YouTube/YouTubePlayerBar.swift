@@ -12,6 +12,10 @@ struct YouTubePlayerBar: View {
     /// One 28pt option button plus its 6pt spacing.
     private static let optionButtonSlotWidth: CGFloat = 28 + 6
 
+    /// At or below this width the option buttons shrink to captions + settings.
+    private static let narrowOptionsBreakpoint: CGFloat = 460
+    private static let narrowOptionsWidth: CGFloat = 28 * 2 + 6 + 12
+
     /// Below this the details block would collide with the transport controls.
     /// Only the resizable detached window reaches this narrow layout.
     private static let baseHiddenVideoDetailsBreakpoint: CGFloat = 580
@@ -55,6 +59,8 @@ struct YouTubePlayerBar: View {
             GeometryReader { proxy in
                 let usesCompactDetails = proxy.size.width <= PlayerBarLayout.compactDetailsBreakpoint
                 let hidesDetails = proxy.size.width <= self.hiddenVideoDetailsBreakpoint
+                // On very narrow windows only captions and settings stay; the rest would be clipped.
+                let isNarrow = proxy.size.width <= Self.narrowOptionsBreakpoint
 
                 HStack(spacing: 10) {
                     if !hidesDetails {
@@ -72,8 +78,8 @@ struct YouTubePlayerBar: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
 
-                    self.youtubeOptionsSection
-                        .frame(width: self.youtubeOptionsWidth, height: 52)
+                    self.youtubeOptionsSection(isNarrow: isNarrow)
+                        .frame(width: isNarrow ? Self.narrowOptionsWidth : self.youtubeOptionsWidth, height: 52)
                 }
             }
             .frame(maxWidth: .infinity)
@@ -359,8 +365,9 @@ struct YouTubePlayerBar: View {
         .disabled(!self.canSeek)
     }
 
-    private var youtubeOptionsSection: some View {
+    private func youtubeOptionsSection(isNarrow: Bool) -> some View {
         HStack(spacing: 6) {
+            if !isNarrow {
             PlayerBarIconButton(
                 action: self.openYouTubeFullView,
                 accessibilityID: AccessibilityID.YouTubeContent.watchFullView,
@@ -373,8 +380,9 @@ struct YouTubePlayerBar: View {
                 }
             )
             .disabled(self.youtubePlayer.currentVideo == nil)
+            }
 
-            if self.hasPersonalAccount {
+            if self.hasPersonalAccount, !isNarrow {
                 PlayerBarIconButton(
                     action: {
                         Task {
@@ -396,6 +404,7 @@ struct YouTubePlayerBar: View {
                 .disabled(self.youtubePlayer.currentVideo == nil)
             }
 
+            if !isNarrow {
             PlayerBarIconButton(
                 action: {
                     HapticService.toggle()
@@ -415,14 +424,16 @@ struct YouTubePlayerBar: View {
                     .accessibilityHidden(true)
             }
             .disabled(self.youtubePlayer.currentVideo == nil)
+            }
 
             self.compactCaptionsMenu
-            self.compactQualityMenu
+            self.compactSettingsMenu
 
-            if self.showsFloatOnTopControl {
+            if self.showsFloatOnTopControl, !isNarrow {
                 self.youtubeFloatOnTopButton
             }
 
+            if !isNarrow {
             PlayerBarIconButton(
                 action: self.toggleYouTubePictureInPicture,
                 isSelected: self.youtubePlayer.surfaceLocation == .floating,
@@ -438,6 +449,7 @@ struct YouTubePlayerBar: View {
                     .contentTransition(.symbolEffect(.replace))
             }
             .disabled(self.youtubePlayer.currentVideo == nil || self.youtubePlayer.isWindowFullscreen)
+            }
         }
         .padding(.trailing, 12)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
@@ -485,21 +497,77 @@ struct YouTubePlayerBar: View {
         .disabled(self.youtubePlayer.currentVideo == nil)
     }
 
-    private var compactQualityMenu: some View {
+    /// The gear: playback speed, quality, sleep timer, loop, repeat-segment and ambient mode.
+    private var compactSettingsMenu: some View {
         PlayerBarIconMenu(
             accessibilityID: AccessibilityID.YouTubeContent.qualityButton,
-            accessibilityLabel: String(localized: "Video quality")
+            accessibilityLabel: String(localized: "Settings")
         ) {
-            ForEach(self.youtubePlayer.qualityLevels, id: \.self) { level in
-                Button {
-                    self.youtubePlayer.selectQuality(level)
-                } label: {
-                    if (self.youtubePlayer.userPinnedQuality ?? "auto") == level {
-                        Label(YouTubeQuality.displayName(for: level), systemImage: "checkmark")
-                    } else {
-                        Text(YouTubeQuality.displayName(for: level))
+            Menu {
+                ForEach(YouTubePlayerService.speedPresets, id: \.self) { rate in
+                    Button {
+                        self.youtubePlayer.setPlaybackRate(rate)
+                    } label: {
+                        if self.youtubePlayer.playbackRate == rate {
+                            Label(Self.speedTitle(rate), systemImage: "checkmark")
+                        } else {
+                            Text(Self.speedTitle(rate))
+                        }
                     }
                 }
+            } label: {
+                Label(
+                    String(localized: "Playback speed: \(Self.speedTitle(self.youtubePlayer.playbackRate))"),
+                    systemImage: "gauge.with.dots.needle.67percent"
+                )
+            }
+
+            Menu {
+                ForEach(self.youtubePlayer.qualityLevels, id: \.self) { level in
+                    Button {
+                        self.youtubePlayer.selectQuality(level)
+                    } label: {
+                        if (self.youtubePlayer.userPinnedQuality ?? "auto") == level {
+                            Label(YouTubeQuality.displayName(for: level), systemImage: "checkmark")
+                        } else {
+                            Text(YouTubeQuality.displayName(for: level))
+                        }
+                    }
+                }
+            } label: {
+                Label(String(localized: "Quality"), systemImage: "sparkles.tv")
+            }
+            .disabled(self.youtubePlayer.qualityLevels.isEmpty)
+
+            Menu {
+                ForEach(YouTubeSleepTimer.menuOptions, id: \.self) { option in
+                    Button {
+                        self.youtubePlayer.setSleepTimer(option)
+                    } label: {
+                        if self.youtubePlayer.sleepTimer == option {
+                            Label(option.title, systemImage: "checkmark")
+                        } else {
+                            Text(option.title)
+                        }
+                    }
+                }
+            } label: {
+                Label(String(localized: "Sleep timer"), systemImage: "moon.zzz")
+            }
+
+            Divider()
+
+            Toggle(isOn: Binding(
+                get: { self.youtubePlayer.isLooping },
+                set: { _ in self.youtubePlayer.toggleLoop() }
+            )) {
+                Label(String(localized: "Loop video"), systemImage: "repeat")
+            }
+
+            self.segmentLoopMenu
+
+            Toggle(isOn: Bindable(self.settings).ambientBackdropEnabled) {
+                Label(String(localized: "Ambient mode"), systemImage: "light.max")
             }
         } icon: {
             Image(systemName: "gearshape")
@@ -507,7 +575,54 @@ struct YouTubePlayerBar: View {
                 .frame(width: 16, height: 16)
                 .foregroundStyle(.primary)
         }
-        .disabled(self.youtubePlayer.qualityLevels.isEmpty)
+        .disabled(self.youtubePlayer.currentVideo == nil)
+    }
+
+    /// "Repeat segment": mark a start and an end while watching, and the player loops between them.
+    private var segmentLoopMenu: some View {
+        let start = self.youtubePlayer.segmentLoopStart
+        let end = self.youtubePlayer.segmentLoopEnd
+        let isActive = start != nil && end != nil
+        return Menu {
+            Button {
+                self.youtubePlayer.markSegmentLoopStart()
+            } label: {
+                Label(
+                    String(localized: "Set start here (\(Self.formatTime(self.youtubePlayer.progress)))"),
+                    systemImage: "arrow.right.to.line"
+                )
+            }
+            Button {
+                self.youtubePlayer.markSegmentLoopEnd()
+            } label: {
+                Label(
+                    String(localized: "Set end here (\(Self.formatTime(self.youtubePlayer.progress)))"),
+                    systemImage: "arrow.left.to.line"
+                )
+            }
+            Divider()
+            Button(role: .destructive) {
+                self.youtubePlayer.clearSegmentLoop()
+            } label: {
+                Label(String(localized: "Clear segment"), systemImage: "xmark")
+            }
+            .disabled(start == nil && end == nil)
+        } label: {
+            if let start, let end, isActive {
+                Label(
+                    String(localized: "Repeat segment: \(Self.formatTime(start))–\(Self.formatTime(end))"),
+                    systemImage: "repeat.1"
+                )
+            } else {
+                Label(String(localized: "Repeat segment (A–B)"), systemImage: "repeat.1")
+            }
+        }
+    }
+
+    private static func speedTitle(_ rate: Double) -> String {
+        if rate == 1 { return String(localized: "Normal") }
+        let text = rate.formatted(.number.precision(.fractionLength(0 ... 2)))
+        return "\(text)×"
     }
 
     private var youtubeVolumeOverlay: some View {

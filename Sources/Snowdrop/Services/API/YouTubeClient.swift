@@ -410,6 +410,58 @@ final class YouTubeClient: YouTubeClientProtocol { // swiftlint:disable:this typ
         return detail
     }
 
+    func getSearchSuggestions(query: String) async throws -> [String] {
+        // The same endpoint youtube.com's search box uses; with the account's session it also
+        // returns that account's recent searches.
+        let auth = try await self.buildRequestHeaders(authPolicy: .optional)
+        var components = URLComponents(string: "https://suggestqueries-clients6.youtube.com/complete/search")
+        components?.queryItems = [
+            URLQueryItem(name: "client", value: "youtube"),
+            URLQueryItem(name: "ds", value: "yt"),
+            URLQueryItem(name: "xhr", value: "t"),
+            URLQueryItem(name: "q", value: query),
+        ]
+        guard let url = components?.url else { return [] }
+
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 8
+        request.httpShouldHandleCookies = auth.authenticated
+        for (key, value) in auth.headers where key != "Content-Type" {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+
+        let result = try await Self.performNetworkRequest(request: request, session: self.session)
+        guard case let .success(data) = result,
+              let json = try? JSONSerialization.jsonObject(with: data) as? [Any],
+              json.count > 1,
+              let items = json[1] as? [Any]
+        else { return [] }
+
+        var seen = Set<String>()
+        return items.compactMap { item -> String? in
+            let raw = (item as? [Any])?.first as? String ?? item as? String
+            guard let raw else { return nil }
+            let text = raw.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            return text.isEmpty || !seen.insert(text.lowercased()).inserted ? nil : text
+        }
+    }
+
+    func getChannelTab(channelId: String, params: String) async throws -> YouTubeChannelTabContent {
+        self.logger.info("Fetching YouTube channel tab")
+        let data = try await self.request(
+            "browse",
+            body: ["browseId": channelId, "params": params],
+            ttl: APICache.TTL.artist
+        )
+        return ChannelPageParser.parseTab(data)
+    }
+
+    func getChannelTabContinuation(continuation: String) async throws -> YouTubeChannelTabContent {
+        let data = try await self.request("browse", body: ["continuation": continuation])
+        return ChannelPageParser.parseTab(data)
+    }
+
     func getPlaylist(playlistId: String) async throws -> YouTubePlaylistDetail {
         self.logger.info("Fetching YouTube playlist page")
 

@@ -28,6 +28,13 @@ final class YouTubeSearchViewModel {
         }
     }
 
+    /// Autocomplete suggestions for the text being typed.
+    private(set) var suggestions: [String] = []
+
+    /// The account's recent searches from YouTube, shown while the field is empty.
+    private(set) var recentSearches: [String] = []
+
+    @ObservationIgnored private var suggestionTask: Task<Void, Never>?
     @ObservationIgnored private var searchTask: Task<Void, Never>?
     @ObservationIgnored private var paginationTask: Task<Void, Never>?
 
@@ -56,6 +63,46 @@ final class YouTubeSearchViewModel {
             await self.awaitStartedSearch(start)
         } else {
             await start.task.value
+        }
+    }
+
+    /// Loads the account's recent searches from YouTube (empty for guests).
+    func loadRecentSearches() async {
+        let found = (try? await self.client.getSearchSuggestions(query: "")) ?? []
+        guard !Task.isCancelled else { return }
+        self.recentSearches = found
+    }
+
+    /// Runs a search for `text` (or the current query).
+    func submit(_ text: String? = nil) async {
+        if let text, text != self.query {
+            self.query = text
+        }
+        let trimmed = Self.normalizedQuery(self.query)
+        guard !trimmed.isEmpty else { return }
+        self.suggestionTask?.cancel()
+        self.suggestions = []
+        await self.search()
+    }
+
+    private func refreshSuggestions(for query: String) {
+        self.suggestionTask?.cancel()
+        guard !query.isEmpty else {
+            self.suggestions = []
+            return
+        }
+        self.suggestionTask = Task { [weak self] in
+            // Debounce so every keystroke doesn't hit the network.
+            try? await Task.sleep(for: .milliseconds(180))
+            guard !Task.isCancelled else { return }
+            guard let self else { return }
+            var found = (try? await self.client.getSearchSuggestions(query: query)) ?? []
+            if found.isEmpty {
+                // Guests (or a failed account request) fall back to the public suggest endpoint.
+                found = await YouTubeSearchSuggestions.fetch(for: query)
+            }
+            guard !Task.isCancelled else { return }
+            self.suggestions = found
         }
     }
 
@@ -98,6 +145,7 @@ final class YouTubeSearchViewModel {
         guard oldQuery != newQuery else { return }
 
         self.invalidateInFlightSearch()
+        self.refreshSuggestions(for: newQuery)
 
         if newQuery.isEmpty {
             self.resetForEmptyQuery()
@@ -212,6 +260,10 @@ final class YouTubeSearchViewModel {
                 let existingVideos = Set(self.results.videos.map(\.videoId))
                 self.results.videos.append(
                     contentsOf: more.videos.filter { !existingVideos.contains($0.videoId) }
+                )
+                let existingShorts = Set(self.results.shorts.map(\.videoId))
+                self.results.shorts.append(
+                    contentsOf: more.shorts.filter { !existingShorts.contains($0.videoId) }
                 )
                 let existingChannels = Set(self.results.channels.map(\.channelId))
                 self.results.channels.append(

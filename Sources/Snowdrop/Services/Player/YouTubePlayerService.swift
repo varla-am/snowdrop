@@ -37,7 +37,17 @@ protocol YouTubeWatchPlaybackControlling: AnyObject {
     func currentQualityLevel() async -> String?
     func setQualityLevel(_ level: String)
     func storyboardSpec(expectedVideoId: String?) async -> String?
+    func setPlaybackRate(_ rate: Double)
+    func setLoop(_ isOn: Bool)
+    func setSegmentLoop(start: Double?, end: Double?)
     func tearDown()
+}
+
+/// Defaults so test recorders written before these controls existed keep compiling.
+extension YouTubeWatchPlaybackControlling {
+    func setPlaybackRate(_: Double) {}
+    func setLoop(_: Bool) {}
+    func setSegmentLoop(start _: Double?, end _: Double?) {}
 }
 
 // MARK: - YouTubeWatchWebView + YouTubeWatchPlaybackControlling
@@ -281,6 +291,20 @@ final class YouTubePlayerService {
     /// Auto. Kept apart from `currentQuality`, which the player overwrites with
     /// whatever level it actually resolved and so cannot represent "Auto".
     private(set) var userPinnedQuality: String?
+
+    /// Playback speed picked in the settings menu. Kept across videos, like YouTube does.
+    private(set) var playbackRate: Double = 1
+
+    /// Whether the current video repeats when it ends.
+    private(set) var isLooping = false
+
+    /// Repeat-segment marks (seconds). Both set = the segment loops; cleared for each new video.
+    private(set) var segmentLoopStart: Double?
+    private(set) var segmentLoopEnd: Double?
+
+    /// Pauses playback after a delay or at the end of the video.
+    private(set) var sleepTimer: YouTubeSleepTimer = .off
+    private var sleepTimerTask: Task<Void, Never>?
 
     /// YouTube storyboard spec for the current video (drives the ambient
     /// backdrop's fine-grained live color). `nil` until fetched / unavailable.
@@ -943,6 +967,8 @@ final class YouTubePlayerService {
         self.qualityLevels = []
         self.currentQuality = nil
         self.userPinnedQuality = nil
+        self.segmentLoopStart = nil
+        self.segmentLoopEnd = nil
         self.currentMediaIsLive = false
         self.storyboardSpec = nil
         self.storyboardFetchVideoId = nil
@@ -1006,6 +1032,10 @@ final class YouTubePlayerService {
                 : levels + ["auto"]
             self.currentQuality = await self.playbackController.currentQualityLevel()
             self.activeCaptionLanguageCode = await self.playbackController.currentCaptionLanguageCode()
+
+            // YouTube resets these for every new video, so re-apply the user's choices.
+            if self.playbackRate != 1 { self.playbackController.setPlaybackRate(self.playbackRate) }
+            if self.isLooping { self.playbackController.setLoop(true) }
 
             if !tracks.isEmpty || attempt == 2 {
                 return
@@ -1113,6 +1143,97 @@ final class YouTubePlayerService {
         self.userPinnedQuality = level == "auto" ? nil : level
         self.playbackController.setQualityLevel(level)
         HapticService.toggle()
+    }
+
+    // MARK: - Playback speed, loop, sleep timer
+
+    /// Speeds offered in the settings menu, same set as youtube.com.
+    nonisolated static let speedPresets: [Double] = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
+
+    /// Sets the playback speed (clamped to YouTube's 0.25...2 range).
+    func setPlaybackRate(_ rate: Double) {
+        guard rate.isFinite else { return }
+        let clamped = min(max(rate, 0.25), 2)
+        self.playbackRate = clamped
+        self.playbackController.setPlaybackRate(clamped)
+        HapticService.toggle()
+    }
+
+    /// Repeats the current video when it ends.
+    func toggleLoop() {
+        self.isLooping.toggle()
+        self.playbackController.setLoop(self.isLooping)
+        HapticService.toggle()
+    }
+
+    /// Marks the current position as the start of a repeated segment.
+    func markSegmentLoopStart() {
+        self.segmentLoopStart = self.progress
+        if let end = self.segmentLoopEnd, end <= self.progress { self.segmentLoopEnd = nil }
+        self.applySegmentLoop()
+    }
+
+    /// Marks the current position as the end of a repeated segment.
+    func markSegmentLoopEnd() {
+        let start = self.segmentLoopStart ?? 0
+        guard self.progress > start + 0.5 else {
+            HapticService.error()
+            return
+        }
+        self.segmentLoopStart = start
+        self.segmentLoopEnd = self.progress
+        self.applySegmentLoop()
+    }
+
+    func clearSegmentLoop() {
+        self.segmentLoopStart = nil
+        self.segmentLoopEnd = nil
+        self.applySegmentLoop()
+    }
+
+    private func applySegmentLoop() {
+        // The page only loops once both marks exist.
+        if let start = self.segmentLoopStart, let end = self.segmentLoopEnd {
+            self.playbackController.setSegmentLoop(start: start, end: end)
+        } else {
+            self.playbackController.setSegmentLoop(start: nil, end: nil)
+        }
+        HapticService.toggle()
+    }
+
+    /// Starts, replaces or cancels the sleep timer.
+    func setSleepTimer(_ option: YouTubeSleepTimer) {
+        self.sleepTimerTask?.cancel()
+        self.sleepTimerTask = nil
+        self.sleepTimer = option
+        HapticService.toggle()
+        switch option {
+        case .off:
+            return
+        case let .minutes(minutes):
+            self.sleepTimerTask = Task { [weak self] in
+                try? await Task.sleep(for: .seconds(Double(minutes) * 60))
+                guard !Task.isCancelled else { return }
+                self?.fireSleepTimer()
+            }
+        case .endOfVideo:
+            self.sleepTimerTask = Task { [weak self] in
+                while !Task.isCancelled {
+                    try? await Task.sleep(for: .seconds(1))
+                    guard let self, !Task.isCancelled else { return }
+                    if self.duration > 0, self.progress >= self.duration - 1 {
+                        self.fireSleepTimer()
+                        return
+                    }
+                }
+            }
+        }
+    }
+
+    private func fireSleepTimer() {
+        self.sleepTimer = .off
+        self.sleepTimerTask = nil
+        self.performPause()
     }
 
     // MARK: - AirPlay

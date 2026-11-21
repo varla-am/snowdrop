@@ -285,7 +285,6 @@ struct PodcastShowView: View {
             // accent backdrop refracts through the floating glass sidebar.
             .detailScrollContentInset()
         }
-        .accentBackground(from: self.show.thumbnailURL)
         .navigationTitle(self.show.title)
         .navigationDestination(for: AllEpisodesDestination.self) { destination in
             AllEpisodesView(
@@ -642,7 +641,6 @@ struct AllEpisodesView: View {
             // accent backdrop refracts through the floating glass sidebar.
             .detailScrollContentInset()
         }
-        .accentBackground(from: self.show.thumbnailURL)
         .localizedNavigationTitle("All Episodes")
         .safeAreaInset(edge: .bottom, spacing: 0) {
             PlayerBar()

@@ -67,10 +67,10 @@ struct AmbientVideoBackdrop: View {
                 // Reduce Transparency: flatten to a near-solid low tint, no glow.
                 self.flatTint
             } else {
-                ZStack {
-                    Color(nsColor: .windowBackgroundColor)
-                    self.ambientContent
-                }
+                // No solid base here: the main window already paints the themed
+                // WindowBackdrop (blur + glow). An opaque layer would hide it and
+                // make the watch page look like a plain gray YouTube page.
+                self.ambientContent
             }
         }
         .animation(.easeInOut(duration: 0.6), value: self.palette)
@@ -551,6 +551,8 @@ extension View {
                 storyboardSpec: storyboardSpec
             )
             .ignoresSafeArea()
+            // A backdrop must never take clicks or hover from the chrome above it.
+            .allowsHitTesting(false)
         }
     }
 }

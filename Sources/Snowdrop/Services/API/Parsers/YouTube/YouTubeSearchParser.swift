@@ -6,7 +6,7 @@ import Foundation
 /// - Videos: legacy `videoRenderer`
 /// - Channels: legacy `channelRenderer`
 /// - Playlists: new `lockupViewModel` (`LOCKUP_CONTENT_TYPE_PLAYLIST`)
-/// - Shorts shelves: `shortsLockupViewModel` (intentionally skipped)
+/// - Shorts shelves: `gridShelfViewModel.contents[].shortsLockupViewModel` (also `reelShelfRenderer`)
 enum YouTubeSearchParser {
     /// Parses a full search response.
     static func parse(_ data: [String: Any]) -> YouTubeSearchResponse {
@@ -29,7 +29,31 @@ enum YouTubeSearchParser {
             }
         }
 
+        // Signed-in / localized responses sometimes nest the channel card elsewhere
+        // (inside a shelf, a watch card…): look for channel renderers anywhere.
+        if response.channels.isEmpty, let contents = data["contents"] {
+            var seen = Set<String>()
+            Self.collectChannels(in: contents) { channel in
+                if seen.insert(channel.channelId).inserted { response.channels.append(channel) }
+            }
+        }
+
         return response
+    }
+
+    private static func collectChannels(in value: Any, _ body: (YouTubeChannel) -> Void) {
+        if let dict = value as? [String: Any] {
+            for key in ["channelRenderer", "gridChannelRenderer"] {
+                if let renderer = dict[key] as? [String: Any],
+                   let channel = YouTubeItemParser.channel(fromChannelRenderer: renderer)
+                {
+                    body(channel)
+                }
+            }
+            for nested in dict.values { Self.collectChannels(in: nested, body) }
+        } else if let array = value as? [Any] {
+            for element in array { Self.collectChannels(in: element, body) }
+        }
     }
 
     /// Parses a search continuation response.
@@ -95,6 +119,19 @@ enum YouTubeSearchParser {
            let playlist = YouTubeItemParser.playlist(fromLockup: lockup)
         {
             response.playlists.append(playlist)
+            return
+        }
+
+        // Shorts shelves: new grid shelf, or the older reel shelf.
+        let shelfItems = (item["gridShelfViewModel"] as? [String: Any])?["contents"] as? [[String: Any]]
+            ?? (item["reelShelfRenderer"] as? [String: Any])?["items"] as? [[String: Any]]
+            ?? []
+        for shelfItem in shelfItems {
+            if let lockup = shelfItem["shortsLockupViewModel"] as? [String: Any],
+               let short = YouTubeItemParser.short(fromShortsLockup: lockup)
+            {
+                response.shorts.append(short)
+            }
         }
     }
 }

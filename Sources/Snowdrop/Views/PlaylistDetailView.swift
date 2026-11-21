@@ -75,9 +75,6 @@ struct PlaylistDetailView: View {
                 }
             }
         }
-        .accentBackground(
-            from: self.viewModel.playlistDetail?.thumbnailURL?.highQualityThumbnailURL
-        )
         .navigationTitle(self.playlist.title)
         .toolbarBackgroundVisibility(.hidden, for: .automatic)
         .safeAreaInset(edge: .bottom, spacing: 0) {

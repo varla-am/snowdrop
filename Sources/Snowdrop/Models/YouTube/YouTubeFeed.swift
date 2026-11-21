@@ -99,6 +99,8 @@ struct YouTubeSearchResponse {
     var videos: [YouTubeVideo]
     var channels: [YouTubeChannel]
     var playlists: [YouTubePlaylist]
+    /// Shorts shelf items, shown as a vertical-card row.
+    var shorts: [YouTubeVideo] = []
     var continuation: String?
 
     static let empty = YouTubeSearchResponse(
@@ -109,7 +111,7 @@ struct YouTubeSearchResponse {
     )
 
     var isEmpty: Bool {
-        self.videos.isEmpty && self.channels.isEmpty && self.playlists.isEmpty
+        self.videos.isEmpty && self.channels.isEmpty && self.playlists.isEmpty && self.shorts.isEmpty
     }
 }
 

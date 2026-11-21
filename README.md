@@ -16,6 +16,7 @@
 
 - **🎵 YouTube Music**: Recommendations are organized like in the original YT Music client, in a floating glass sidebar
 - **▶️ YouTube**: Switch to regular YouTube with one button at the bottom of the sidebar. The home page follows the original: topic chips on top and a grid of video cards
+- **📺 Channels & Search**: Channel pages with all tabs and a Subscribe button; search with your history, suggestions, and a YouTube-style grid
 - **📱 Shorts**: A vertical Shorts player with like, dislike, share and next/previous buttons
 - **💽 Floating Player**: Floating overlay that shows what is playing, a song or a YouTube video, and lets you control it
 - **💬 Subtitles**: A YouTube-style CC button in the player bar. Click to toggle, right-click to pick a language
@@ -29,7 +30,7 @@
 
 <h3 align="center"><b>🔧 Installation</b></h3>
 
-- Download `Snowdrop-v1.3.dmg` from the latest release
+- Download `Snowdrop-v1.4.0.dmg` from the latest release
 - Open the `.dmg` file
 - Drag Snowdrop to Applications
 - Gatekeeper will block the app from launching because it's not notarized, bypass it by clicking _Right Click -> Open_ or _System Settings -> Privacy & Security -> Open Anyway_

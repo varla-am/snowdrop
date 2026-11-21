@@ -18,8 +18,9 @@ struct WindowBackdrop: View {
                 if #available(macOS 26.0, *) {
                     // Frost first, so windows behind this one stay unreadable and the
                     // cards on top stay legible; then real Liquid Glass over it.
+                    // Full-strength frost: a faded blur lets the sharp windows behind
+                    // (a browser's tab bar, say) show through as a ghost.
                     BehindWindowBlur()
-                        .opacity(0.7 + 0.3 * self.transparency)
                     WindowGlass(
                         tint: NSColor(self.theme.glow.0),
                         tintAlpha: 0.10 + 0.30 * (1 - self.transparency),

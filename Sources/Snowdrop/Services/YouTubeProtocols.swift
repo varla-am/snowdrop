@@ -97,6 +97,16 @@ protocol YouTubeClientProtocol: Sendable {
     /// Fetches a channel page by `UC…` channel ID.
     func getChannel(channelId: String) async throws -> YouTubeChannelDetail
 
+    /// Fetches one channel tab (Videos, Shorts, Live, Playlists, …) by the `params` the channel page gave.
+    func getChannelTab(channelId: String, params: String) async throws -> YouTubeChannelTabContent
+
+    /// Search-box suggestions from YouTube. For a signed-in account they include the account's own
+    /// recent searches; with an empty `query` they are the recent searches alone.
+    func getSearchSuggestions(query: String) async throws -> [String]
+
+    /// Fetches the next page of a channel tab by continuation token.
+    func getChannelTabContinuation(continuation: String) async throws -> YouTubeChannelTabContent
+
     /// Fetches a playlist page by playlist ID (without the `VL` prefix).
     func getPlaylist(playlistId: String) async throws -> YouTubePlaylistDetail
 
@@ -150,5 +160,22 @@ extension YouTubeClientProtocol {
     /// Fetches watch history using the cache (the default for normal loads).
     func getHistory() async throws -> YouTubeFeed {
         try await self.getHistory(forceRefresh: false)
+    }
+}
+
+// MARK: - Channel tab defaults
+
+/// Default no-op channel-tab support so test doubles don't all have to implement it.
+extension YouTubeClientProtocol {
+    func getSearchSuggestions(query _: String) async throws -> [String] {
+        []
+    }
+
+    func getChannelTab(channelId _: String, params _: String) async throws -> YouTubeChannelTabContent {
+        YouTubeChannelTabContent()
+    }
+
+    func getChannelTabContinuation(continuation _: String) async throws -> YouTubeChannelTabContent {
+        YouTubeChannelTabContent()
     }
 }

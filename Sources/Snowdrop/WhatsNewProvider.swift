@@ -11,6 +11,33 @@ enum WhatsNewProvider {
     /// Static fallback entries used when the network is unavailable.
     static let fallbackCollection: [WhatsNew] = [
         WhatsNew(
+            version: "1.4.0",
+            title: "What's New in Snowdrop 1.4",
+            features: [
+                .init(
+                    icon: "person.crop.rectangle",
+                    title: "Real Channel Pages",
+                    subtitle: "Videos, Shorts, Live, Playlists and Podcasts tabs, a banner, and a Subscribe button that follows your YouTube account"
+                ),
+                .init(
+                    icon: "magnifyingglass",
+                    title: "Search Like YouTube",
+                    subtitle: "Your YouTube search history when the box is empty, live suggestions while you type, and a grid with big videos, Shorts and channel cards"
+                ),
+                .init(
+                    icon: "person.crop.circle",
+                    title: "Account in the Corner",
+                    subtitle: "Your avatar sits in the top-right corner of YouTube for quick account switching"
+                ),
+                .init(
+                    icon: "sparkles",
+                    title: "Cleaner Look",
+                    subtitle: "Music pages blend into the window instead of a dark slab, the sidebar keeps working while a video plays, and the player bar adapts to narrow windows"
+                ),
+            ],
+            learnMoreURL: URL(string: "https://github.com/varla-am/kaset-snowdrop/releases")
+        ),
+        WhatsNew(
             version: "1.3",
             title: "What's New in Snowdrop 1.3",
             features: [
