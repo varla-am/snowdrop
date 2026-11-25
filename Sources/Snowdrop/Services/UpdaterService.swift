@@ -139,7 +139,18 @@ final class UpdaterService {
 
     func installAvailableUpdate() {
         guard case let .available(info) = self.state else { return }
+        // A sandboxed app can neither write into /Applications nor run the swap script,
+        // so the in-place install can't work: hand the DMG to the browser instead.
+        if Self.isSandboxed {
+            NSWorkspace.shared.open(info.downloadURL)
+            return
+        }
         Task { await self.install(info) }
+    }
+
+    /// True when running inside the App Sandbox (the container id is only set there).
+    nonisolated static var isSandboxed: Bool {
+        ProcessInfo.processInfo.environment["APP_SANDBOX_CONTAINER_ID"] != nil
     }
 
     private func install(_ info: UpdateInfo) async {
@@ -186,9 +197,12 @@ final class UpdaterService {
     private func presentAvailable(_ info: UpdateInfo) {
         let alert = NSAlert()
         alert.messageText = String(localized: "Snowdrop \(info.version) is available")
-        alert.informativeText = String(localized: "You have \(self.currentVersion). Snowdrop will download the update, replace itself and restart.")
+        let how = Self.isSandboxed
+            ? String(localized: "You have \(self.currentVersion). Snowdrop will download the new disk image; open it and drag Snowdrop to Applications.")
+            : String(localized: "You have \(self.currentVersion). Snowdrop will download the update, replace itself and restart.")
+        alert.informativeText = how
             + (info.notes.isEmpty ? "" : "\n\n" + String(info.notes.prefix(600)))
-        alert.addButton(withTitle: String(localized: "Install and Restart"))
+        alert.addButton(withTitle: Self.isSandboxed ? String(localized: "Download") : String(localized: "Install and Restart"))
         alert.addButton(withTitle: String(localized: "Later"))
         if alert.runModal() == .alertFirstButtonReturn {
             self.installAvailableUpdate()

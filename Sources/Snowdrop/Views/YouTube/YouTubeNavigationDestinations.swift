@@ -7,6 +7,7 @@ enum YouTubeRoute: Hashable {
     case watch(YouTubeVideo)
     case channel(channelId: String)
     case playlist(playlistId: String)
+    case history
 }
 
 // MARK: - Navigation Destinations
@@ -37,7 +38,24 @@ extension View {
                 YouTubePlaylistDetailView(playlistId: playlistId, client: client)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .youtubePagePlayerBarInset()
+            case .history:
+                YouTubeHistoryRouteView(client: client)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .youtubePagePlayerBarInset()
             }
         }
+    }
+}
+
+/// Owns a history model for the pushed History page (the sidebar's one lives in the store).
+private struct YouTubeHistoryRouteView: View {
+    @State private var viewModel: YouTubeHistoryViewModel
+
+    init(client: any YouTubeClientProtocol) {
+        self._viewModel = State(initialValue: YouTubeHistoryViewModel(client: client))
+    }
+
+    var body: some View {
+        YouTubeHistoryView(viewModel: self.viewModel)
     }
 }

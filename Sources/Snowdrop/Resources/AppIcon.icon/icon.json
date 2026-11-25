@@ -1,6 +1,6 @@
 {
   "fill": {
-    "solid": "srgb:0.075,0.105,0.30,1.00000"
+    "solid": "srgb:0.47,0.78,1.00,1.00000"
   },
   "groups": [
     {
@@ -24,7 +24,7 @@
         "opacity": 0.5
       },
       "translucency": {
-        "enabled": true,
+        "enabled": false,
         "value": 0.5
       }
     }

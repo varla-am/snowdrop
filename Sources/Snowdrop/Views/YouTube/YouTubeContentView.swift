@@ -170,6 +170,8 @@ struct YouTubeContentView: View {
         switch item {
         case .home:
             YouTubeHomeView(viewModel: self.store.home)
+        case .you:
+            YouTubeYouView(viewModel: self.store.you, home: self.store.home)
         case .search:
             YouTubeSearchView(viewModel: self.store.search)
         case .explore:
@@ -200,6 +202,7 @@ struct YouTubeContentView: View {
 /// model: the recommended feed, subscriptions, and the user's video library.
 enum YouTubeNavigationItem: String, Hashable, CaseIterable, Identifiable {
     case home = "Home"
+    case you = "You"
     case search = "Search"
     case subscriptions = "Subscriptions"
     case explore = "Explore"
@@ -217,6 +220,8 @@ enum YouTubeNavigationItem: String, Hashable, CaseIterable, Identifiable {
         switch self {
         case .home:
             String(localized: "Home")
+        case .you:
+            String(localized: "You")
         case .search:
             String(localized: "Search")
         case .subscriptions:
@@ -240,6 +245,8 @@ enum YouTubeNavigationItem: String, Hashable, CaseIterable, Identifiable {
         switch self {
         case .home:
             "house"
+        case .you:
+            "person.crop.circle"
         case .search:
             "magnifyingglass"
         case .subscriptions:
@@ -263,7 +270,7 @@ enum YouTubeNavigationItem: String, Hashable, CaseIterable, Identifiable {
         switch self {
         case .home, .search, .explore, .shorts:
             false
-        case .subscriptions, .likedVideos, .watchLater, .playlists, .history:
+        case .you, .subscriptions, .likedVideos, .watchLater, .playlists, .history:
             true
         }
     }

@@ -611,9 +611,32 @@ struct MainWindow: View { // swiftlint:disable:this type_body_length
             // (Music already has its own avatar in the top bar, so only YouTube gets this one.)
             .overlay(alignment: .topTrailing) {
                 if self.settings.appSource == .video {
-                    ToolbarAccountButton()
-                        .padding(.top, 12)
-                        .padding(.trailing, 18)
+                    HStack(spacing: 10) {
+                        if self.authService.hasPersonalAccount {
+                            Button {
+                                self.youtubeNavigationSelection = .you
+                                HapticService.navigation()
+                            } label: {
+                                Label(String(localized: "You"), systemImage: "person.crop.circle")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundStyle(self.youtubeNavigationSelection == .you ? Color.white : Color.primary)
+                                    .padding(.horizontal, 12)
+                                    .frame(height: 26)
+                                    .background {
+                                        if self.youtubeNavigationSelection == .you {
+                                            Capsule().fill(Color.accentColor.gradient)
+                                        } else {
+                                            Capsule().fill(.regularMaterial)
+                                        }
+                                    }
+                            }
+                            .buttonStyle(.plain)
+                            .help(String(localized: "You"))
+                        }
+                        ToolbarAccountButton()
+                    }
+                    .padding(.top, 12)
+                    .padding(.trailing, 18)
                 }
             }
             .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)

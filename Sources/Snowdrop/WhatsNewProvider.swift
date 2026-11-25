@@ -11,6 +11,38 @@ enum WhatsNewProvider {
     /// Static fallback entries used when the network is unavailable.
     static let fallbackCollection: [WhatsNew] = [
         WhatsNew(
+            version: "1.5.0",
+            title: "What's New in Snowdrop 1.5",
+            features: [
+                .init(
+                    icon: "person.crop.circle",
+                    title: "Your You Page",
+                    subtitle: "History, Watch Later, Liked and your playlists as tiles, your latest videos in a row you can scroll sideways, and a bar with your favourite channels"
+                ),
+                .init(
+                    icon: "slider.horizontal.3",
+                    title: "Personalize You",
+                    subtitle: "Pick channels (search all of YouTube), collections and what the video row switches between"
+                ),
+                .init(
+                    icon: "sparkles",
+                    title: "Recommended",
+                    subtitle: "Recommendations under your videos, scrolling on their own while the rest of the page stays put"
+                ),
+                .init(
+                    icon: "opticaldisc",
+                    title: "New Icon",
+                    subtitle: "A light blue record with a snowflake"
+                ),
+                .init(
+                    icon: "arrow.down.circle",
+                    title: "Updates That Work",
+                    subtitle: "The update dialog now opens the download when the app can't replace itself"
+                ),
+            ],
+            learnMoreURL: URL(string: "https://github.com/varla-am/kaset-snowdrop/releases")
+        ),
+        WhatsNew(
             version: "1.4.0",
             title: "What's New in Snowdrop 1.4",
             features: [

@@ -22,6 +22,7 @@ final class YouTubeViewModelStore {
     private(set) var subscriptions: YouTubeSubscriptionsViewModel
     private(set) var history: YouTubeHistoryViewModel
     private(set) var playlists: YouTubePlaylistsViewModel
+    private(set) var you: YouTubeYouViewModel
 
     init(client: any YouTubeClientProtocol) {
         self.client = client
@@ -32,6 +33,7 @@ final class YouTubeViewModelStore {
         self.subscriptions = YouTubeSubscriptionsViewModel(client: client)
         self.history = YouTubeHistoryViewModel(client: client)
         self.playlists = YouTubePlaylistsViewModel(client: client)
+        self.you = YouTubeYouViewModel(client: client)
     }
 
     /// Opens `video` in place of the watch page on top of the stack.
@@ -60,6 +62,7 @@ final class YouTubeViewModelStore {
         self.subscriptions.cancelLoad()
         self.history.cancelLoad()
         self.playlists.cancelLoad()
+        self.you.cancelLoad()
 
         self.home = YouTubeHomeViewModel(client: self.client)
         self.search = YouTubeSearchViewModel(client: self.client)
@@ -68,6 +71,7 @@ final class YouTubeViewModelStore {
         self.subscriptions = YouTubeSubscriptionsViewModel(client: self.client)
         self.history = YouTubeHistoryViewModel(client: self.client)
         self.playlists = YouTubePlaylistsViewModel(client: self.client)
+        self.you = YouTubeYouViewModel(client: self.client)
     }
 
     /// Refreshes public guest-safe YouTube surfaces after sign-out.
