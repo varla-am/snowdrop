@@ -44,7 +44,7 @@ enum WhatsNewProvider {
                 .init(
                     icon: "person.crop.circle",
                     title: "Your You Page",
-                    subtitle: "History, Watch Later, Liked and your playlists as tiles, your latest videos in a row you can scroll sideways, and a bar with your favourite channels"
+                    subtitle: "History, Watch Later, Liked and your saved collections as tiles, your latest videos in a row you can scroll sideways, and a bar with your favourite channels"
                 ),
                 .init(
                     icon: "slider.horizontal.3",
@@ -76,7 +76,7 @@ enum WhatsNewProvider {
                 .init(
                     icon: "person.crop.rectangle",
                     title: "Real Channel Pages",
-                    subtitle: "Videos, Shorts, Live, Playlists and Podcasts tabs, a banner, and a Subscribe button that follows your YouTube account"
+                    subtitle: "Videos, Shorts, Live and Podcasts tabs plus channel collections, a banner, and a Subscribe button that follows your YouTube account"
                 ),
                 .init(
                     icon: "magnifyingglass",
