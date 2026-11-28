@@ -1,0 +1,20 @@
+import os
+here = os.path.dirname(os.path.abspath(__file__)) if '__file__' in dir() else os.getcwd()
+format = 'UDZO'
+files = [defines.get("app", "Snowdrop.app")]
+symlinks = {'Applications': '/Applications'}
+icon = os.path.expanduser('~/Library/Mobile Documents/com~apple~CloudDocs/Projects/SwiftProj/Snowdrop/SnowdropDir/Snowdrop-icon.icns')
+background = os.path.join(os.path.dirname(os.path.abspath(defines.get("settings_dir", "Scripts/dmg/x"))), "background.png")
+hide_extensions = ['Snowdrop.app']
+show_status_bar = False
+show_tab_view = False
+show_toolbar = False
+show_pathbar = False
+show_sidebar = False
+window_rect = ((400, 120), (480, 708))
+default_view = 'icon-view'
+arrange_by = None
+icon_size = 112
+text_size = 13
+label_pos = 'bottom'
+icon_locations = {'Snowdrop.app': (240, 190), 'Applications': (240, 500)}

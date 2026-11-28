@@ -109,6 +109,8 @@ protocol YouTubeClientProtocol: Sendable {
 
     /// Fetches a playlist page by playlist ID (without the `VL` prefix).
     func getPlaylist(playlistId: String) async throws -> YouTubePlaylistDetail
+    /// Like `getPlaylist(playlistId:)`, optionally skipping the cache (for Watch Later, Liked and other live lists).
+    func getPlaylist(playlistId: String, forceRefresh: Bool) async throws -> YouTubePlaylistDetail
 
     /// Fetches a public destination feed (Gaming, News, …) for Explore.
     func getDestinationFeed(_ destination: YouTubeDestination) async throws -> YouTubeFeed
@@ -157,6 +159,11 @@ protocol YouTubeClientProtocol: Sendable {
 // MARK: - YouTubeClientProtocol Convenience
 
 extension YouTubeClientProtocol {
+    /// Test doubles that don't care about caching get the plain fetch.
+    func getPlaylist(playlistId: String, forceRefresh _: Bool) async throws -> YouTubePlaylistDetail {
+        try await self.getPlaylist(playlistId: playlistId)
+    }
+
     /// Fetches watch history using the cache (the default for normal loads).
     func getHistory() async throws -> YouTubeFeed {
         try await self.getHistory(forceRefresh: false)

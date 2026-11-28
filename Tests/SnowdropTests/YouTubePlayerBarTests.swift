@@ -48,7 +48,7 @@ struct YouTubePlayerBarTests {
         )
 
         #expect(standardBreakpoint == 580)
-        #expect(pinnedWindowBreakpoint - standardBreakpoint == 34)
+        #expect(pinnedWindowBreakpoint - standardBreakpoint == 36)
     }
 
     @Test("Options width tracks the buttons actually shown")
@@ -58,10 +58,15 @@ struct YouTubePlayerBarTests {
         let pinnedSignedIn = YouTubePlayerBar.optionsWidth(showsFloatOnTopControl: true, showsWatchLaterControl: true)
         let pinnedSignedOut = YouTubePlayerBar.optionsWidth(showsFloatOnTopControl: true, showsWatchLaterControl: false)
 
-        #expect(signedIn == 210)
-        #expect(signedIn - signedOut == 34)
-        #expect(pinnedSignedIn - signedIn == 34)
+        let live = YouTubePlayerBar.optionsWidth(
+            showsFloatOnTopControl: false, showsWatchLaterControl: true, showsLiveChatControl: true
+        )
+
+        #expect(signedIn == 226)
+        #expect(signedIn - signedOut == 36)
+        #expect(pinnedSignedIn - signedIn == 36)
         #expect(pinnedSignedOut == signedIn)
+        #expect(live - signedIn == 36)
     }
 
     @Test("Detached controls stay visible while the volume overlay is presented")

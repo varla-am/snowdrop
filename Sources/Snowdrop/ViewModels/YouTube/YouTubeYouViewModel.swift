@@ -92,15 +92,15 @@ final class YouTubeYouViewModel {
         do {
             let videos: [YouTubeVideo]
             if sourceId == YouTubeYouPreferences.historyID {
-                videos = try await self.client.getHistory().videos
+                videos = try await self.client.getHistory(forceRefresh: force).videos
             } else {
-                videos = try await self.client.getPlaylist(playlistId: sourceId).videos
+                videos = try await self.client.getPlaylist(playlistId: sourceId, forceRefresh: force).videos
             }
             guard run == self.generation else { return }
             self.videosBySource[sourceId] = videos
         } catch {
             self.logger.error("You page videos failed: \(error.localizedDescription)")
-            if run == self.generation { self.videosBySource[sourceId] = [] }
+            if run == self.generation, self.videosBySource[sourceId] == nil { self.videosBySource[sourceId] = [] }
         }
     }
 }

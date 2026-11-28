@@ -31,9 +31,9 @@
 
 <h3 align="center"><b>🔧 Installation</b></h3>
 
-- Download `Snowdrop-v1.5.0.dmg` from the latest release
+- Download `Snowdrop-v1.5.0-smc1.dmg` from the [latest release](https://github.com/varla-am/snowdrop/releases/tag/release-v1.5.0-nfc1) (Nightly Feature Commit 1)
 - Open the `.dmg` file
-- Drag Snowdrop to Applications
+- Drag Snowdrop down onto the Applications folder
 - Gatekeeper will block the app from launching because it's not notarized, bypass it by clicking _Right Click -> Open_ or _System Settings -> Privacy & Security -> Open Anyway_
 
 <h3 align="center"><b>✏️ Building</b></h3>

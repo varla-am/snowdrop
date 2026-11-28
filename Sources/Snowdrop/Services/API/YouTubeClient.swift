@@ -463,13 +463,18 @@ final class YouTubeClient: YouTubeClientProtocol { // swiftlint:disable:this typ
     }
 
     func getPlaylist(playlistId: String) async throws -> YouTubePlaylistDetail {
-        self.logger.info("Fetching YouTube playlist page")
+        try await self.getPlaylist(playlistId: playlistId, forceRefresh: false)
+    }
+
+    func getPlaylist(playlistId: String, forceRefresh: Bool) async throws -> YouTubePlaylistDetail {
+        self.logger.info("Fetching YouTube playlist page\(forceRefresh ? " (forced)" : "")")
 
         let browseId = playlistId.hasPrefix("VL") ? playlistId : "VL\(playlistId)"
         let data = try await self.request(
             "browse",
             body: ["browseId": browseId],
-            ttl: APICache.TTL.playlist
+            ttl: APICache.TTL.playlist,
+            bypassCache: forceRefresh
         )
         let id = playlistId.hasPrefix("VL") ? String(playlistId.dropFirst(2)) : playlistId
         return YouTubePlaylistPageParser.parse(data, playlistId: id)

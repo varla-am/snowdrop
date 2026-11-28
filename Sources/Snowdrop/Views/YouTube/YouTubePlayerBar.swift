@@ -7,14 +7,18 @@ struct YouTubePlayerBar: View {
     private static let brandAccent = PackageResourceLookup.brandAccent
     private static let fullVideoDetailsWidth: CGFloat = 294
     private static let compactVideoDetailsWidth: CGFloat = 141
+    /// Gap between option buttons.
+    private static let optionButtonSpacing: CGFloat = 8
+    /// Gap between the last option button and the capsule's rounded right end.
+    private static let optionsTrailingInset: CGFloat = 18
     /// Full view, Watch Later, AirPlay, captions, quality, PiP, and padding.
-    private static let baseYouTubeOptionsWidth: CGFloat = 210
-    /// One 28pt option button plus its 6pt spacing.
-    private static let optionButtonSlotWidth: CGFloat = 28 + 6
+    private static let baseYouTubeOptionsWidth: CGFloat = 6 * 28 + 5 * optionButtonSpacing + optionsTrailingInset
+    /// One 28pt option button plus its spacing.
+    private static let optionButtonSlotWidth: CGFloat = 28 + optionButtonSpacing
 
     /// At or below this width the option buttons shrink to captions + settings.
     private static let narrowOptionsBreakpoint: CGFloat = 460
-    private static let narrowOptionsWidth: CGFloat = 28 * 2 + 6 + 12
+    private static let narrowOptionsWidth: CGFloat = 28 * 2 + optionButtonSpacing + optionsTrailingInset
 
     /// Below this the details block would collide with the transport controls.
     /// Only the resizable detached window reaches this narrow layout.
@@ -79,7 +83,13 @@ struct YouTubePlayerBar: View {
                         .frame(height: 52)
 
                     self.youtubeOptionsSection(isNarrow: isNarrow)
-                        .frame(width: isNarrow ? Self.narrowOptionsWidth : self.youtubeOptionsWidth, height: 52)
+                        .frame(
+                            width: isNarrow
+                                ? Self.narrowOptionsWidth
+                                    + (self.youtubePlayer.currentVideo?.isLive == true ? Self.optionButtonSlotWidth : 0)
+                                : self.youtubeOptionsWidth,
+                            height: 52
+                        )
                 }
             }
             .frame(maxWidth: .infinity)
@@ -366,7 +376,7 @@ struct YouTubePlayerBar: View {
     }
 
     private func youtubeOptionsSection(isNarrow: Bool) -> some View {
-        HStack(spacing: 6) {
+        HStack(spacing: Self.optionButtonSpacing) {
             if !isNarrow {
             PlayerBarIconButton(
                 action: self.openYouTubeFullView,
@@ -426,6 +436,9 @@ struct YouTubePlayerBar: View {
             .disabled(self.youtubePlayer.currentVideo == nil)
             }
 
+            if self.youtubePlayer.currentVideo?.isLive == true {
+                self.liveChatButton
+            }
             self.compactCaptionsMenu
             self.compactSettingsMenu
 
@@ -451,8 +464,27 @@ struct YouTubePlayerBar: View {
             .disabled(self.youtubePlayer.currentVideo == nil || self.youtubePlayer.isWindowFullscreen)
             }
         }
-        .padding(.trailing, 12)
+        .padding(.trailing, Self.optionsTrailingInset)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+    }
+
+    /// Opens the live stream's chat in its own window.
+    private var liveChatButton: some View {
+        PlayerBarIconButton(
+            action: {
+                guard let video = self.youtubePlayer.currentVideo else { return }
+                HapticService.toggle()
+                YouTubeLiveChatWindowController.shared.show(videoId: video.videoId, title: video.title)
+            },
+            accessibilityID: AccessibilityID.YouTubeContent.liveChatButton,
+            accessibilityLabel: String(localized: "Live chat"),
+            icon: {
+                Image(systemName: "bubble.left.and.bubble.right")
+                    .font(.system(size: 15, weight: .regular))
+                    .foregroundStyle(.primary)
+            }
+        )
+        .help(String(localized: "Open live chat in a separate window"))
     }
 
     /// YouTube's CC button: one click turns captions on or off, right-click picks the language.
@@ -486,10 +518,58 @@ struct YouTubePlayerBar: View {
                 Button {
                     self.youtubePlayer.selectCaptionTrack(languageCode: track.languageCode)
                 } label: {
-                    if self.youtubePlayer.activeCaptionLanguageCode == track.languageCode {
+                    if self.youtubePlayer.activeCaptionLanguageCode == track.languageCode,
+                       !(YouTubeSubtitleStyle.shared.japaneseLatin && YouTubeSubtitleStyle.isJapanese(trackCode: track.languageCode))
+                    {
                         Label(track.displayName, systemImage: "checkmark")
                     } else {
                         Text(track.displayName)
+                    }
+                }
+            }
+
+            if let japanese = self.youtubePlayer.captionTracks.first(where: {
+                YouTubeSubtitleStyle.isJapanese(trackCode: $0.languageCode)
+            }) {
+                Button {
+                    self.youtubePlayer.selectCaptionTrack(languageCode: japanese.languageCode, japaneseLatin: true)
+                } label: {
+                    if self.youtubePlayer.activeCaptionLanguageCode == japanese.languageCode,
+                       YouTubeSubtitleStyle.shared.japaneseLatin
+                    {
+                        Label(String(localized: "Japanese (Latin)"), systemImage: "checkmark")
+                    } else {
+                        Text("Japanese (Latin)", comment: "Caption language: Japanese shown in Latin letters")
+                    }
+                }
+            }
+
+            Divider()
+
+            Menu(String(localized: "Subtitle size")) {
+                ForEach(YouTubeSubtitleStyle.sizeOptions) { option in
+                    Button {
+                        YouTubeSubtitleStyle.shared.scale = option.scale
+                    } label: {
+                        if abs(YouTubeSubtitleStyle.shared.scale - option.scale) < 0.01 {
+                            Label(option.name, systemImage: "checkmark")
+                        } else {
+                            Text(option.name)
+                        }
+                    }
+                }
+            }
+
+            Menu(String(localized: "Subtitle lines")) {
+                ForEach(YouTubeSubtitleStyle.lineOptions, id: \.self) { count in
+                    Button {
+                        YouTubeSubtitleStyle.shared.lines = count
+                    } label: {
+                        if YouTubeSubtitleStyle.shared.lines == count {
+                            Label("\(count)", systemImage: "checkmark")
+                        } else {
+                            Text("\(count)")
+                        }
                     }
                 }
             }
@@ -840,9 +920,14 @@ extension YouTubePlayerBar {
     }
 
     /// Sized to the buttons shown, so no Watch Later leaves no dead gap.
-    static func optionsWidth(showsFloatOnTopControl: Bool, showsWatchLaterControl: Bool) -> CGFloat {
+    static func optionsWidth(
+        showsFloatOnTopControl: Bool,
+        showsWatchLaterControl: Bool,
+        showsLiveChatControl: Bool = false
+    ) -> CGFloat {
         self.baseYouTubeOptionsWidth
             + (showsFloatOnTopControl ? self.optionButtonSlotWidth : 0)
+            + (showsLiveChatControl ? self.optionButtonSlotWidth : 0)
             - (showsWatchLaterControl ? 0 : self.optionButtonSlotWidth)
     }
 }
@@ -897,7 +982,8 @@ private extension YouTubePlayerBar {
     var youtubeOptionsWidth: CGFloat {
         Self.optionsWidth(
             showsFloatOnTopControl: self.showsFloatOnTopControl,
-            showsWatchLaterControl: self.hasPersonalAccount
+            showsWatchLaterControl: self.hasPersonalAccount,
+            showsLiveChatControl: self.youtubePlayer.currentVideo?.isLive == true
         )
     }
 

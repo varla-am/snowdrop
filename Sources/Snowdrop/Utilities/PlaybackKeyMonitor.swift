@@ -59,6 +59,8 @@ final class PlaybackKeyMonitor {
               event.modifierFlags.intersection(.deviceIndependentFlagsMask).isDisjoint(with: [.command, .control, .option, .shift]),
               let window = event.window, window.isKeyWindow,
               !window.isSheet,
+              // The live chat window is a web page you type into; its keys are text.
+              window.identifier?.rawValue != AccessibilityID.YouTubeContent.liveChatWindow,
               !Self.isEditingText(in: window)
         else { return false }
 

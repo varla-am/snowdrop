@@ -9,6 +9,7 @@ enum AccessibilityID {
         identifier == VideoWindow.container
             || identifier == MiniPlayer.container
             || identifier == YouTubeContent.videoWindow
+            || identifier == YouTubeContent.liveChatWindow
     }
 
     // MARK: - Sidebar
@@ -219,5 +220,7 @@ enum AccessibilityID {
 
 extension AccessibilityID.YouTubeContent {
     static let videoWindow = "youtubeContent.videoWindow"
+    static let liveChatWindow = "youtubeContent.liveChatWindow"
+    static let liveChatButton = "youtubeContent.liveChatButton"
     static let videoWindowFloatOnTop = "youtubeContent.videoWindow.floatOnTop"
 }

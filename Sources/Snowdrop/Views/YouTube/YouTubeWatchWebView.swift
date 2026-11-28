@@ -85,6 +85,11 @@ final class YouTubeWatchWebView {
             websiteDataStore: usesCookieFreeDataStore ? .nonPersistent() : nil
         )
         configuration.userContentController.add(coordinator, name: "youtubePlayer")
+        configuration.userContentController.addScriptMessageHandler(
+            YouTubeSubtitleBridge(),
+            contentWorld: .page,
+            name: Self.subtitleBridgeName
+        )
         self.installUserScripts(
             on: configuration.userContentController,
             targetVolume: playerService.volume,
@@ -330,6 +335,9 @@ final class YouTubeWatchWebView {
         }
         webView.configuration.userContentController.removeScriptMessageHandler(
             forName: "youtubePlayer"
+        )
+        webView.configuration.userContentController.removeScriptMessageHandler(
+            forName: Self.subtitleBridgeName
         )
         webView.navigationDelegate = nil
         webView.uiDelegate = nil
@@ -895,5 +903,12 @@ extension YouTubeWatchWebView {
             forMainFrameOnly: true
         )
         contentController.addUserScript(extraction)
+
+        let subtitles = WKUserScript(
+            source: Self.subtitleScript(configJSON: YouTubeSubtitleStyle.shared.pageConfigJSON),
+            injectionTime: .atDocumentEnd,
+            forMainFrameOnly: true
+        )
+        contentController.addUserScript(subtitles)
     }
 }

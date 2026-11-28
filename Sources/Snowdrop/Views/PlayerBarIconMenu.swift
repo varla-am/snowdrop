@@ -14,33 +14,25 @@ struct PlayerBarIconMenu<MenuContent: View, Icon: View>: View {
     @State private var isHovering = false
 
     var body: some View {
-        ZStack {
+        // The visible icon is the menu's own label, so the click lands on the menu
+        // itself (an invisible overlay label stopped receiving clicks on newer macOS).
+        Menu {
+            self.menuContent()
+        } label: {
             self.icon()
                 .frame(width: 28, height: 28)
                 .background {
                     RoundedRectangle(cornerRadius: 8, style: .continuous)
                         .fill(self.backgroundColor)
                 }
-                .accessibilityHidden(true)
-
-            Menu {
-                self.menuContent()
-            } label: {
-                Label {
-                    Text(self.accessibilityLabel ?? "")
-                } icon: {
-                    Color.white.opacity(0.001)
-                        .frame(width: 28, height: 28)
-                }
-                .labelStyle(.iconOnly)
-            }
-            .menuStyle(.borderlessButton)
-            .menuIndicator(.hidden)
-            .buttonStyle(.plain)
-            .frame(width: 28, height: 28)
-            .playerBarMenuAccessibilityIdentifier(self.accessibilityID)
-            .playerBarMenuAccessibilityLabel(self.accessibilityLabel)
+                .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         }
+        .menuStyle(.button)
+        .buttonStyle(.plain)
+        .menuIndicator(.hidden)
+        .frame(width: 28, height: 28)
+        .playerBarMenuAccessibilityIdentifier(self.accessibilityID)
+        .playerBarMenuAccessibilityLabel(self.accessibilityLabel)
         .frame(width: 28, height: 28)
         .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .opacity(self.isEnabled ? 1 : 0.38)

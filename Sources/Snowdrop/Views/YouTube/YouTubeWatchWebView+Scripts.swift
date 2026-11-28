@@ -647,13 +647,15 @@ extension YouTubeWatchWebView {
                         object-fit: contain !important;
                     }
 
-                    /* Captions are overlay siblings of the video, not
-                       ancestors — keep them visible above it. */
+                    /* YouTube's own captions stay in the page so Snowdrop can read
+                       their text, but invisible: Snowdrop draws its own (see
+                       YouTubeWatchWebView+Subtitles). */
                     .ytp-caption-window-container,
                     .ytp-caption-window-container *,
                     .caption-window, .caption-window * {
                         visibility: visible !important;
-                        z-index: 2147483647 !important;
+                        opacity: 0 !important;
+                        pointer-events: none !important;
                     }
 
                     /* YouTube raises captions when its (invisible) controls

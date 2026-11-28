@@ -1105,8 +1105,16 @@ final class YouTubePlayerService {
     }
 
     /// Selects a caption track (nil turns captions off).
-    func selectCaptionTrack(languageCode: String?) {
+    /// `japaneseLatin`: nil leaves the "Japanese (Latin)" choice alone for Japanese tracks
+    /// and switches it off for every other language.
+    func selectCaptionTrack(languageCode: String?, japaneseLatin: Bool? = nil) {
         self.activeCaptionLanguageCode = languageCode
+        let style = YouTubeSubtitleStyle.shared
+        if let japaneseLatin {
+            style.japaneseLatin = japaneseLatin
+        } else if let languageCode, !YouTubeSubtitleStyle.isJapanese(trackCode: languageCode) {
+            style.japaneseLatin = false
+        }
         self.playbackController.setCaptionTrack(languageCode: languageCode)
         HapticService.toggle()
     }

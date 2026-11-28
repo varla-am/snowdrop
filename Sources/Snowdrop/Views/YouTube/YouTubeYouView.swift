@@ -9,6 +9,7 @@ struct YouTubeYouView: View {
     let home: YouTubeHomeViewModel
 
     @Environment(AccountService.self) private var accountService
+    @Environment(YouTubePlayerService.self) private var youtubePlayer
     @State private var preferences = YouTubeYouPreferences.shared
     @State private var selectedVideoSource: String?
     @State private var showingPersonalize = false
@@ -203,8 +204,16 @@ struct YouTubeYouView: View {
                     }
                 }
             }
+            // Fresh data every time the page or the source comes up (history and lists change often).
             .task(id: source.id) {
-                await self.viewModel.loadVideos(for: source.id)
+                await self.viewModel.loadVideos(for: source.id, force: true)
+            }
+            // After a watch ends, YouTube needs a moment to record it; then refresh.
+            .onChange(of: self.youtubePlayer.watchConclusionGeneration) { _, _ in
+                Task {
+                    try? await Task.sleep(for: .seconds(3))
+                    await self.viewModel.loadVideos(for: source.id, force: true)
+                }
             }
         }
     }
