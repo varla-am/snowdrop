@@ -10,6 +10,8 @@ struct UpdaterServiceTests {
         #expect(UpdaterService.version(fromTag: "release-v1.2.1") == "1.2.1")
         #expect(UpdaterService.version(fromTag: "v1.2") == "1.2")
         #expect(UpdaterService.version(fromTag: "1.0") == "1.0")
+        #expect(UpdaterService.version(fromTag: "release-v1.5.1-nfc1") == "1.5.1")
+        #expect(UpdaterService.isNewer(UpdaterService.version(fromTag: "release-v1.5.1-nfc1"), than: "1.5.0"))
     }
 
     @Test("Compares versions numerically")

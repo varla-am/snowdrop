@@ -250,11 +250,14 @@ extension UpdaterService {
         }
     }
 
-    /// "release-v1.2.1" → "1.2.1"; "v1.2" → "1.2".
+    /// "release-v1.2.1" → "1.2.1"; "v1.2" → "1.2"; "release-v1.5.1-nfc1" → "1.5.1".
+    /// A build label after the version ("-nfc1") is dropped, so the result matches the
+    /// app's CFBundleShortVersionString and compares as a plain version.
     nonisolated static func version(fromTag tag: String) -> String {
         var version = tag
         if version.hasPrefix("release-") { version.removeFirst("release-".count) }
         if version.hasPrefix("v") || version.hasPrefix("V") { version.removeFirst() }
+        if let dash = version.firstIndex(of: "-") { version = String(version[..<dash]) }
         return version
     }
 

@@ -11,6 +11,33 @@ enum WhatsNewProvider {
     /// Static fallback entries used when the network is unavailable.
     static let fallbackCollection: [WhatsNew] = [
         WhatsNew(
+            version: "1.5.1",
+            title: "What's New in Snowdrop 1.5.1",
+            features: [
+                .init(
+                    icon: "bubble.left.and.bubble.right",
+                    title: "Live Chat Window",
+                    subtitle: "On streams, open YouTube's live chat in its own window, in Snowdrop's theme"
+                ),
+                .init(
+                    icon: "captions.bubble",
+                    title: "Better Subtitles",
+                    subtitle: "Japanese in Latin letters, plus subtitle size and how many lines show"
+                ),
+                .init(
+                    icon: "slider.horizontal.below.rectangle",
+                    title: "Player Bar Fixes",
+                    subtitle: "Menus open again, buttons have more room and stay inside the bar"
+                ),
+                .init(
+                    icon: "arrow.down.circle",
+                    title: "Updates",
+                    subtitle: "The updater understands nightly release tags"
+                ),
+            ],
+            learnMoreURL: URL(string: "https://github.com/varla-am/kaset-snowdrop/releases")
+        ),
+        WhatsNew(
             version: "1.5.0",
             title: "What's New in Snowdrop 1.5",
             features: [
